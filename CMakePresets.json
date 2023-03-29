@@ -1,46 +1,118 @@
 {
-  "version": 3,
-  "configurePresets": [
-    {
-      "name": "base",
-      "hidden": true,
-      "generator": "Ninja",
-      "binaryDir": "${sourceDir}/build/${presetName}",
-      "installDir": "${sourceDir}/install/${presetName}",
-      "cacheVariables": {
-        "CMAKE_CXX_COMPILER": "cl.exe",
-        "CMAKE_CXX_STANDARD": "23",
-        "CMAKE_CXX_STANDARD_REQUIRED": "ON",
-        "CMAKE_CXX_FLAGS": "/std:c++20 /permissive- /Zc:preprocessor /EHsc /MP /W4 -DMBCS -D_MBCS -D_CRT_SECURE_NO_WARNINGS -DWIN32_LEAN_AND_MEAN -DNOMINMAX",
-        "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
-        "CMAKE_MSVC_RUNTIME_LIBRARY": "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL",
-        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
-        "VCPKG_OVERLAY_TRIPLETS": "${sourceDir}/cmake",
-        "CMAKE_BUILD_TYPE": "Debug"
-      }
-    },
-    {
-      "name": "x86",
-      "binaryDir": "${sourceDir}/build/debug",
-      "inherits": ["base"],
-      "architecture": {
-        "value": "x86",
-        "strategy": "external"
-      },
-      "cacheVariables": {
-        "VCPKG_TARGET_TRIPLET": "x86-windows-static-md"
-      }
-    },
-    {
-      "name": "x64",
-      "inherits": ["base"],
-      "architecture": {
-        "value": "x64",
-        "strategy": "external"
-      },
-      "cacheVariables": {
-        "VCPKG_TARGET_TRIPLET": "x64-windows-static-md"
-      }
-    }
-  ]
+    "version": 3,
+    "configurePresets": [
+        {
+            "name": "base",
+            "hidden": true,
+            "generator": "Ninja",
+            "binaryDir": "${sourceDir}/build/${presetName}",
+            "installDir": "${sourceDir}/install/${presetName}",
+            "cacheVariables": {
+                "CMAKE_CXX_COMPILER": "cl.exe",
+                "CMAKE_CXX_STANDARD": "23",
+                "CMAKE_CXX_STANDARD_REQUIRED": "ON",
+                "CMAKE_CXX_FLAGS": "/std:c++20 /permissive- /Zc:preprocessor /EHsc /MP /W4 -DMBCS -D_MBCS -D_CRT_SECURE_NO_WARNINGS -DWIN32_LEAN_AND_MEAN -DNOMINMAX",
+                "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
+                "CMAKE_MSVC_RUNTIME_LIBRARY": "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL",
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+                "CMAKE_BUILD_TYPE": "Debug"
+            }
+        },
+        {
+            "name": "dynamic",
+            "hidden": true,
+            "cacheVariables": { "VCPKG_CRT_LINKAGE": "dynamic", "VCPKG_LIBRARY_LINKAGE": "dynamic" }
+        },
+        {
+            "name": "x86",
+            "hidden": true,
+            "architecture": { "value": "x86", "strategy": "external" },
+            "cacheVariables": { "VCPKG_TARGET_TRIPLET": "x86-windows-static-md" }
+        },
+        {
+            "name": "x64",
+            "hidden": true,
+            "architecture": { "value": "x64", "strategy": "external" },
+            "cacheVariables": { "VCPKG_TARGET_TRIPLET": "x64-windows-static-md" }
+        },
+        {
+            "name": "nana",
+            "hidden": true,
+            "cacheVariables": { "VCPKG_MANIFEST_FEATURES": "nana" }
+        },
+        {
+            "name": "flkt",
+            "hidden": true,
+            "cacheVariables": { "VCPKG_MANIFEST_FEATURES": "fltk" }
+        },
+        {
+            "name": "gtkmm",
+            "hidden": true,
+            "inherits": "dynamic",
+            "cacheVariables": { "VCPKG_MANIFEST_FEATURES": "gtkmm" }
+        },
+        {
+            "name": "wxwidgets",
+            "hidden": true,
+            "cacheVariables": { "VCPKG_MANIFEST_FEATURES": "wxwidgets" }
+        },
+        {
+            "name": "qt",
+            "hidden": true,
+            "cacheVariables": { "VCPKG_MANIFEST_FEATURES": "qt" }
+        },
+        {
+            "name": "imgui",
+            "hidden": true,
+            "cacheVariables": { "VCPKG_MANIFEST_FEATURES": "imgui" }
+        },
+        {
+            "name": "nana - x86",
+            "inherits": ["base", "x86", "nana"]
+        },
+        {
+            "name": "nana - x64",
+            "inherits": ["base", "x64", "nana"]
+        },
+        {
+            "name": "fltk - x86",
+            "inherits": ["base", "x86", "fltk"]
+        },
+        {
+            "name": "fltk - x64",
+            "inherits": ["base", "x64", "fltk"]
+        },
+        {
+            "name": "gtkmm - x86",
+            "inherits": ["base", "x86", "gtkmm"]
+        },
+        {
+            "name": "gtkmm - x64",
+            "inherits": ["base", "x64", "gtkmm"]
+        },
+        {
+            "name": "wxwidgets - x86",
+            "inherits": ["base", "x86", "wxwidgets"]
+        },
+        {
+            "name": "wxwidgets - x64",
+            "inherits": ["base", "x64", "wxwidgets"]
+        },
+        {
+            "name": "qt - x86",
+            "inherits": ["base", "x86", "qt"]
+        },
+        {
+            "name": "qt - x64",
+            "inherits": ["base", "x64", "qt"]
+        },
+        {
+            "name": "imgui - x86",
+            "inherits": ["base", "x86", "imgui"]
+        },
+        {
+            "name": "imgui - x64",
+            "inherits": ["base", "x64", "imgui"]
+        }
+    ]
 }
