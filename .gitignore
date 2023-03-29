@@ -1,0 +1,16 @@
+build
+.idea
+cmake-build*
+.vs
+*.pdb
+.vscode/settings.json
+docs
+Debug
+x86
+x64
+.cache
+*.PTR*
+*.scandata*
+target
+*.dll
+*.exe
