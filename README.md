@@ -3,6 +3,8 @@
 > Lightweight DSL for creating GUI in C++  
 > (_with adapters for Qt, Gtkmm, wxWidgets, FLTK, ImGUI, and nana_)
 
+> **No Layout Support Planned** - _Not for pretty UIs!_
+
 ## Feature Support Status
 
 ### v1
