@@ -28,7 +28,7 @@
                     "name": "imgui",
                     "features": ["glfw-binding", "opengl3-binding"]
                 },
-                "glew",
+                "gl3w",
                 "opengl"
             ]
         }
