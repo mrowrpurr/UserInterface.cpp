@@ -1,105 +1,138 @@
-#include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include <Windows.h>
 
+#include <fstream>
 #include <iostream>
 
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
 
-using namespace std;
+// OpenGL 3.0 or higher
+const char* glsl_version = "#version 130";
+
+void scaleImGuiStyle(float scaleFactor = 2.5f) {
+    ImGuiStyle& style = ImGui::GetStyle();
+    style.ScaleAllSizes(scaleFactor);
+
+    ImGuiIO& io        = ImGui::GetIO();
+    io.FontGlobalScale = scaleFactor;
+}
+
+void setupImGui(GLFWwindow* window) {
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGui::StyleColorsDark();
+    ImGui_ImplGlfw_InitForOpenGL(window, true);
+    ImGui_ImplOpenGL3_Init(glsl_version);
+}
+
+void GetMonitorRealResolution(HMONITOR monitor, int* pixelsWidth, int* pixelsHeight) {
+    MONITORINFOEX info = {sizeof(MONITORINFOEX)};
+    GetMonitorInfo(monitor, &info);
+    DEVMODE devmode = {};
+    devmode.dmSize  = sizeof(DEVMODE);
+    EnumDisplaySettings(info.szDevice, ENUM_CURRENT_SETTINGS, &devmode);
+    *pixelsWidth  = devmode.dmPelsWidth;
+    *pixelsHeight = devmode.dmPelsHeight;
+}
 
 int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
-    // Setup GLFW and OpenGL
-    if (!glfwInit()) return 1;
-    const char* glsl_version = "#version 130";
+    std::ofstream file;
+    file.open("log.txt");
+    std::streambuf* sbuf = std::cout.rdbuf();
+    std::cout.rdbuf(file.rdbuf());
+
+    HMONITOR primary_monitor = MonitorFromPoint({0, 0}, MONITOR_DEFAULTTOPRIMARY);
+    int*     pixelsWidth     = new int;
+    int*     pixelsHeight    = new int;
+    GetMonitorRealResolution(primary_monitor, pixelsWidth, pixelsHeight);
+    int true_screen_width  = *pixelsWidth;
+    int true_screen_height = *pixelsHeight;
+    std::cout << "Screen width: " << true_screen_width << std::endl;
+
+    if (!glfwInit()) {
+        fprintf(stderr, "Failed to initialize GLFW\n");
+        return 1;
+    }
+    std::cout << "GLFW initialized" << std::endl;
+
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
-    GLFWwindow* window = glfwCreateWindow(1280, 720, "Dear ImGui Example", NULL, NULL);
-    if (window == NULL) return 1;
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+    glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER, GLFW_TRUE);  // Enable transparency
+    glfwWindowHint(GLFW_DECORATED, GLFW_FALSE);               // No title bar
+    // glfwWindowHint(GLFW_MOUSE_PASSTHROUGH, GLFW_TRUE);
+    // glfwWindowHint(0x0002000D, GLFW_TRUE);
+
+    GLFWwindow* window = glfwCreateWindow(
+        true_screen_width - 1, true_screen_height - 1, "ImGui Transparent OpenGL Window Example",
+        nullptr, nullptr
+    );
+    std::cout << "Window created" << std::endl;
+    if (window == nullptr) {
+        fprintf(stderr, "Failed to create GLFW window\n");
+        std::cout << "Failed to create GLFW window" << std::endl;
+        glfwTerminate();
+        return 1;
+    }
 
     glfwMakeContextCurrent(window);
     glfwSwapInterval(1);  // Enable vsync
 
-    // Initialize OpenGL loader
-    if (glewInit() != GLEW_OK) {
-        std::cerr << "Failed to initialize OpenGL loader!" << std::endl;
-        return 1;
-    }
+    // std::cout << "OpenGL version: " << glGetString(GL_VERSION) << std::endl;
+    // if (glfwInit() != 0) {
+    //     std::cout << "GLFW NOT initialized" << std::endl;
+    //     const char* description;
+    //     int         code = glfwGetError(&description);
 
-    // Setup Dear ImGui context
-    IMGUI_CHECKVERSION();
-    ImGui::CreateContext();
-    ImGuiIO& io = ImGui::GetIO();
-    (void)io;
+    //     if (description) std::cout << "GLFW Error: " << description << std::endl;
+    //     std::cout << "GLFW Error code: " << code << std::endl;
 
-    // Setup Dear ImGui style
-    ImGui::StyleColorsDark();
+    //     fprintf(stderr, "Failed to initialize OpenGL loader!\n");
+    //     return 1;
+    // }
+    // std::cout << "GLFW initialized" << std::endl;
 
-    // Setup Platform/Renderer bindings
-    ImGui_ImplGlfw_InitForOpenGL(window, true);
-    ImGui_ImplOpenGL3_Init(glsl_version);
+    setupImGui(window);
+    scaleImGuiStyle();
 
-    // Main loop
-    while (!glfwWindowShouldClose(window)) {
-        // Poll and handle events (inputs, window resize, etc.)
+    ImVec4 clear_color = ImVec4(0.0f, 0.0f, 0.0f, 0.0f);  // Set clear color to transparent
+
+    bool readyToClose = false;
+    while (!readyToClose && !glfwWindowShouldClose(window)) {
         glfwPollEvents();
 
-        // Start the Dear ImGui frame
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
 
-        // Create the ImGui window
-        ImGui::Begin("Dear ImGui Example");
+        ImGui::Begin("Sample Window");
 
-        // Add the tabs
-        if (ImGui::BeginTabBar("Example TabBar")) {
-            // First tab
-            if (ImGui::BeginTabItem("Tab 1")) {
-                static char text[32] = "";
-                ImGui::Text("Enter text:");
-                ImGui::InputText("##textbox", text, IM_ARRAYSIZE(text));
-                ImGui::EndTabItem();
-            }
-
-            // Second tab
-            if (ImGui::BeginTabItem("Tab 2")) {
-                static float slider_value = 0.0f;
-                ImGui::SliderFloat("Slider", &slider_value, 0.0f, 100.0f);
-
-                if (ImGui::Button("Click Me")) {
-                    std::cout << "Button clicked! Slider value: " << slider_value << std::endl;
-                }
-                ImGui::EndTabItem();
-            }
-
-            ImGui::EndTabBar();
+        if (ImGui::Button("Click me!")) {
+            printf("Button clicked!\n");
+            readyToClose = true;
         }
 
         ImGui::End();
 
-        // Rendering
         ImGui::Render();
         int display_w, display_h;
         glfwGetFramebufferSize(window, &display_w, &display_h);
         glViewport(0, 0, display_w, display_h);
-        glClearColor(0.45f, 0.55f, 0.60f, 1.00f);
+        glClearColor(clear_color.x, clear_color.y, clear_color.z, clear_color.w);
         glClear(GL_COLOR_BUFFER_BIT);
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
-        // Swap buffers
         glfwSwapBuffers(window);
     }
 
-    // Cleanup
     ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplGlfw_Shutdown();
     ImGui::DestroyContext();
 
     glfwDestroyWindow(window);
     glfwTerminate();
-
     return 0;
 }
