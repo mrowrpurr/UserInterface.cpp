@@ -1,4 +1,3 @@
-#include <GL/gl3w.h>
 #include <GLFW/glfw3.h>
 #include <Windows.h>
 
@@ -11,6 +10,14 @@
 
 // OpenGL 3.0 or higher
 const char* glsl_version = "#version 130";
+
+void scaleImGuiStyle(float scaleFactor = 2.5f) {
+    ImGuiStyle& style = ImGui::GetStyle();
+    style.ScaleAllSizes(scaleFactor);
+
+    ImGuiIO& io        = ImGui::GetIO();
+    io.FontGlobalScale = scaleFactor;
+}
 
 void setupImGui(GLFWwindow* window) {
     IMGUI_CHECKVERSION();
@@ -48,6 +55,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
         fprintf(stderr, "Failed to initialize GLFW\n");
         return 1;
     }
+    std::cout << "GLFW initialized" << std::endl;
 
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
@@ -55,14 +63,17 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
     glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER, GLFW_TRUE);  // Enable transparency
     glfwWindowHint(GLFW_DECORATED, GLFW_FALSE);               // No title bar
-    // glfwWindowHint(GLFW_MOUSE_PASSTHROUGH , GLFW_TRUE);
+    // glfwWindowHint(GLFW_MOUSE_PASSTHROUGH, GLFW_TRUE);
+    // glfwWindowHint(0x0002000D, GLFW_TRUE);
 
     GLFWwindow* window = glfwCreateWindow(
         true_screen_width - 1, true_screen_height - 1, "ImGui Transparent OpenGL Window Example",
         nullptr, nullptr
     );
+    std::cout << "Window created" << std::endl;
     if (window == nullptr) {
         fprintf(stderr, "Failed to create GLFW window\n");
+        std::cout << "Failed to create GLFW window" << std::endl;
         glfwTerminate();
         return 1;
     }
@@ -70,16 +81,27 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
     glfwMakeContextCurrent(window);
     glfwSwapInterval(1);  // Enable vsync
 
-    if (gl3wInit() != 0) {
-        fprintf(stderr, "Failed to initialize OpenGL loader!\n");
-        return 1;
-    }
+    // std::cout << "OpenGL version: " << glGetString(GL_VERSION) << std::endl;
+    // if (glfwInit() != 0) {
+    //     std::cout << "GLFW NOT initialized" << std::endl;
+    //     const char* description;
+    //     int         code = glfwGetError(&description);
+
+    //     if (description) std::cout << "GLFW Error: " << description << std::endl;
+    //     std::cout << "GLFW Error code: " << code << std::endl;
+
+    //     fprintf(stderr, "Failed to initialize OpenGL loader!\n");
+    //     return 1;
+    // }
+    // std::cout << "GLFW initialized" << std::endl;
 
     setupImGui(window);
+    scaleImGuiStyle();
 
     ImVec4 clear_color = ImVec4(0.0f, 0.0f, 0.0f, 0.0f);  // Set clear color to transparent
 
-    while (!glfwWindowShouldClose(window)) {
+    bool readyToClose = false;
+    while (!readyToClose && !glfwWindowShouldClose(window)) {
         glfwPollEvents();
 
         ImGui_ImplOpenGL3_NewFrame();
@@ -90,6 +112,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
         if (ImGui::Button("Click me!")) {
             printf("Button clicked!\n");
+            readyToClose = true;
         }
 
         ImGui::End();
