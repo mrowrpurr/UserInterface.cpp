@@ -1,41 +1,36 @@
 {
-  "$schema": "https://raw.githubusercontent.com/microsoft/vcpkg-tool/main/docs/vcpkg.schema.json",
-  "features": {
-    "nana": {
-      "description": "Build with Nana GUI library",
-      "dependencies": [
-        "nana"
-      ]
-    },
-    "fltk": {
-      "description": "Build with FLTK GUI library",
-      "dependencies": [
-        "fltk"
-      ]
-    },
-    "gtkmm": {
-      "description": "Build with GTKMM GUI library",
-      "dependencies": [
-        "gtkmm"
-      ]
-    },
-    "wxwidgets": {
-      "description": "Build with wxWidgets GUI library",
-      "dependencies": [
-        "wxwidgets"
-      ]
-    },
-    "qt": {
-      "description": "Build with Qt GUI library",
-      "dependencies": [
-        "qtbase", "qtdeclarative"
-      ]
-    },
-    "imgui": {
-      "description": "Build with Dear ImGUI GUI library",
-      "dependencies": [
-        "imgui"
-      ]
+    "$schema": "https://raw.githubusercontent.com/microsoft/vcpkg-tool/main/docs/vcpkg.schema.json",
+    "features": {
+        "nana": {
+            "description": "Build with Nana GUI library",
+            "dependencies": ["nana"]
+        },
+        "fltk": {
+            "description": "Build with FLTK GUI library",
+            "dependencies": ["fltk"]
+        },
+        "gtkmm": {
+            "description": "Build with GTKMM GUI library",
+            "dependencies": ["gtkmm"]
+        },
+        "wxwidgets": {
+            "description": "Build with wxWidgets GUI library",
+            "dependencies": ["wxwidgets"]
+        },
+        "qt": {
+            "description": "Build with Qt GUI library",
+            "dependencies": ["qtbase", "qtdeclarative"]
+        },
+        "imgui": {
+            "description": "Build with Dear ImGUI GUI library",
+            "dependencies": [
+                {
+                    "name": "imgui",
+                    "features": ["glfw-binding", "opengl3-binding"]
+                },
+                "glew",
+                "opengl"
+            ]
+        }
     }
-  }
 }

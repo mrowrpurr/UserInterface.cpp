@@ -41,7 +41,7 @@
             "cacheVariables": { "VCPKG_MANIFEST_FEATURES": "nana" }
         },
         {
-            "name": "flkt",
+            "name": "fltk",
             "hidden": true,
             "cacheVariables": { "VCPKG_MANIFEST_FEATURES": "fltk" }
         },

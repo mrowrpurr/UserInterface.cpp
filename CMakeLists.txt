@@ -4,8 +4,6 @@ project(UserInterface VERSION 0.1.0 LANGUAGES CXX)
 
 add_library(${PROJECT_NAME} INTERFACE)
 
-# find_package(CommonLibSSE CONFIG REQUIRED)
-# target_link_libraries(${PROJECT_NAME} INTERFACE CommonLibSSE::CommonLibSSE)
 target_include_directories(
     ${PROJECT_NAME}
     INTERFACE
