@@ -34,12 +34,12 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
     form_place["labels"] << name_label << age_label;
     form_place["inputs"] << name_box << age_box;
-
+    form_place.div("vert <labels max=20 gap=10><inputs max=30 gap=10><btn margin=10>");
     form_place.collocate();
 
     // Controls layout
     place controls_place{controls_panel};
-    controls_place.div("vert <sliders gap=5><radios gap=5><checkboxes gap=5>");
+    controls_place.div("vert <sliders gap=5 max=30><radios gap=5 max=30><checkboxes gap=5 max=30>");
 
     label  slider_label{controls_panel, "Slider:"};
     slider slider_ctrl{controls_panel};
@@ -73,9 +73,9 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
     // Layout for the main form
     place main_place{fm};
-    main_place.div("<tab><panel>");
+    main_place.div("vert <tab weight=30><panel margin=10>");
     main_place["tab"] << tab;
-    main_place["panel"] << form_panel << controls_panel;
+    main_place["panel"].fasten(form_panel).fasten(controls_panel);
     main_place.collocate();
 
     // Set initial state
