@@ -15,13 +15,9 @@
                 "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
                 "CMAKE_MSVC_RUNTIME_LIBRARY": "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL",
                 "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
-                "CMAKE_BUILD_TYPE": "Debug"
+                "CMAKE_BUILD_TYPE": "Debug",
+                "VCPKG_OVERLAY_TRIPLETS": "${sourceDir}/triplets"
             }
-        },
-        {
-            "name": "dynamic",
-            "hidden": true,
-            "cacheVariables": { "VCPKG_CRT_LINKAGE": "dynamic", "VCPKG_LIBRARY_LINKAGE": "dynamic" }
         },
         {
             "name": "x86",
@@ -48,7 +44,6 @@
         {
             "name": "gtkmm",
             "hidden": true,
-            "inherits": "dynamic",
             "cacheVariables": { "VCPKG_MANIFEST_FEATURES": "gtkmm" }
         },
         {
@@ -67,51 +62,55 @@
             "cacheVariables": { "VCPKG_MANIFEST_FEATURES": "imgui" }
         },
         {
-            "name": "nana - x86",
+            "name": "nana-x86",
             "inherits": ["base", "x86", "nana"]
         },
         {
-            "name": "nana - x64",
+            "name": "nana-x64",
             "inherits": ["base", "x64", "nana"]
         },
         {
-            "name": "fltk - x86",
+            "name": "fltk-x86",
             "inherits": ["base", "x86", "fltk"]
         },
         {
-            "name": "fltk - x64",
+            "name": "fltk-x64",
             "inherits": ["base", "x64", "fltk"]
         },
         {
-            "name": "gtkmm - x86",
-            "inherits": ["base", "x86", "gtkmm"]
+            "name": "gtkmm-x86",
+            "inherits": ["base", "gtkmm"],
+            "architecture": { "value": "x86", "strategy": "external" },
+            "cacheVariables": { "VCPKG_TARGET_TRIPLET": "x86-dynamic-by-default" }
         },
         {
-            "name": "gtkmm - x64",
-            "inherits": ["base", "x64", "gtkmm"]
+            "name": "gtkmm-x64",
+            "inherits": ["base", "gtkmm"],
+            "architecture": { "value": "x64", "strategy": "external" },
+            "cacheVariables": { "VCPKG_TARGET_TRIPLET": "x64-dynamic-by-default" }
         },
         {
-            "name": "wxwidgets - x86",
+            "name": "wxwidgets-x86",
             "inherits": ["base", "x86", "wxwidgets"]
         },
         {
-            "name": "wxwidgets - x64",
+            "name": "wxwidgets-x64",
             "inherits": ["base", "x64", "wxwidgets"]
         },
         {
-            "name": "qt - x86",
+            "name": "qt-x86",
             "inherits": ["base", "x86", "qt"]
         },
         {
-            "name": "qt - x64",
+            "name": "qt-x64",
             "inherits": ["base", "x64", "qt"]
         },
         {
-            "name": "imgui - x86",
+            "name": "imgui-x86",
             "inherits": ["base", "x86", "imgui"]
         },
         {
-            "name": "imgui - x64",
+            "name": "imgui-x64",
             "inherits": ["base", "x64", "imgui"]
         }
     ]
