@@ -41,6 +41,7 @@
                     "features": ["sdl2-binding", "opengl3-binding"]
                 },
                 "sdl2",
+                "glew",
                 "opengl"
             ]
         }

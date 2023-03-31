@@ -17,6 +17,13 @@ if(imgui-glfw3-opengl IN_LIST VCPKG_MANIFEST_FEATURES)
     find_package(glfw3 CONFIG REQUIRED)
 endif()
 
+if(imgui-sdl2-opengl IN_LIST VCPKG_MANIFEST_FEATURES)
+    find_package(imgui CONFIG REQUIRED)
+    find_package(OpenGL REQUIRED)
+    find_package(SDL2 CONFIG REQUIRED)
+    find_package(GLEW REQUIRED)
+endif()
+
 if(qt IN_LIST VCPKG_MANIFEST_FEATURES)
     # TODO: do we need "Qt6" ?
     find_package(Qt6 CONFIG REQUIRED)
@@ -45,8 +52,19 @@ function(link_current_gui_libraries ExampleProjectName)
 
     if(imgui-glfw3-opengl IN_LIST VCPKG_MANIFEST_FEATURES)
         target_link_libraries(${ExampleProjectName} PRIVATE imgui::imgui)
-        target_link_libraries(${ExampleProjectName} PRIVATE glfw)
         target_link_libraries(${ExampleProjectName} PRIVATE OpenGL::GL)
+        target_link_libraries(${ExampleProjectName} PRIVATE glfw)
+    endif()
+
+    if(imgui-sdl2-opengl IN_LIST VCPKG_MANIFEST_FEATURES)
+        target_link_libraries(${ExampleProjectName} PRIVATE imgui::imgui)
+        target_link_libraries(${ExampleProjectName} PRIVATE OpenGL::GL)
+        target_link_libraries(${ExampleProjectName}
+            PRIVATE
+            $<TARGET_NAME_IF_EXISTS:SDL2::SDL2main>
+            $<IF:$<TARGET_EXISTS:SDL2::SDL2>,SDL2::SDL2,SDL2::SDL2-static>
+        )
+        target_link_libraries(${ExampleProjectName} PRIVATE GLEW::GLEW)
     endif()
 
     if(qt IN_LIST VCPKG_MANIFEST_FEATURES)
