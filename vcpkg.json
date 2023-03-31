@@ -11,7 +11,7 @@
         },
         "gtkmm": {
             "description": "Build with GTKMM GUI library",
-            "dependencies": ["gtkmm"]
+            "dependencies": ["gtkmm", "pkgconf"]
         },
         "wxwidgets": {
             "description": "Build with wxWidgets GUI library",
