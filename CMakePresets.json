@@ -58,14 +58,19 @@
             "cacheVariables": { "VCPKG_MANIFEST_FEATURES": "qt" }
         },
         {
-            "name": "imgui",
+            "name": "imgui-glfw3-opengl",
             "hidden": true,
-            "cacheVariables": { "VCPKG_MANIFEST_FEATURES": "imgui" }
+            "cacheVariables": { "VCPKG_MANIFEST_FEATURES": "imgui-glfw3-opengl" }
+        },
+        {
+            "name": "imgui-sdl2-opengl",
+            "hidden": true,
+            "cacheVariables": { "VCPKG_MANIFEST_FEATURES": "imgui-sdl2-opengl" }
         },
         {
             "name": "small-frameworks",
             "hidden": true,
-            "cacheVariables": { "VCPKG_MANIFEST_FEATURES": "nana;fltk;wxwidgets;imgui" }
+            "cacheVariables": { "VCPKG_MANIFEST_FEATURES": "nana;fltk;wxwidgets" }
         },
         {
             "name": "nana-x86",
@@ -112,12 +117,20 @@
             "inherits": ["base", "x64", "qt"]
         },
         {
-            "name": "imgui-x86",
-            "inherits": ["base", "x86", "imgui"]
+            "name": "imgui-glfw3-opengl-x86",
+            "inherits": ["base", "x86", "imgui-glfw3-opengl"]
         },
         {
-            "name": "imgui-x64",
-            "inherits": ["base", "x64", "imgui"]
+            "name": "imgui-glfw3-opengl-x64",
+            "inherits": ["base", "x64", "imgui-glfw3-opengl"]
+        },
+        {
+            "name": "imgui-sdl2-opengl-x86",
+            "inherits": ["base", "x86", "imgui-sdl2-opengl"]
+        },
+        {
+            "name": "imgui-sdl2-opengl-x64",
+            "inherits": ["base", "x64", "imgui-sdl2-opengl"]
         },
         {
             "name": "small-frameworks-x86",

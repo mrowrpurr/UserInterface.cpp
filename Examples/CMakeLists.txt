@@ -11,7 +11,7 @@ if(wxwidgets IN_LIST VCPKG_MANIFEST_FEATURES)
 endif()
 
 # TODO: add another feature for ImGUI SDL2 backend to test both backends
-if(imgui IN_LIST VCPKG_MANIFEST_FEATURES)
+if(imgui-glfw3-opengl IN_LIST VCPKG_MANIFEST_FEATURES)
     find_package(imgui CONFIG REQUIRED)
     find_package(OpenGL REQUIRED)
     find_package(glfw3 CONFIG REQUIRED)
@@ -43,7 +43,7 @@ function(link_current_gui_libraries ExampleProjectName)
         target_link_libraries(${ExampleProjectName} PRIVATE wx::core wx::base)
     endif()
 
-    if(imgui IN_LIST VCPKG_MANIFEST_FEATURES)
+    if(imgui-glfw3-opengl IN_LIST VCPKG_MANIFEST_FEATURES)
         target_link_libraries(${ExampleProjectName} PRIVATE imgui::imgui)
         target_link_libraries(${ExampleProjectName} PRIVATE glfw)
         target_link_libraries(${ExampleProjectName} PRIVATE OpenGL::GL)

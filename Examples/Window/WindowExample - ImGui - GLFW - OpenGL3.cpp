@@ -81,20 +81,6 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
     glfwMakeContextCurrent(window);
     glfwSwapInterval(1);  // Enable vsync
 
-    // std::cout << "OpenGL version: " << glGetString(GL_VERSION) << std::endl;
-    // if (glfwInit() != 0) {
-    //     std::cout << "GLFW NOT initialized" << std::endl;
-    //     const char* description;
-    //     int         code = glfwGetError(&description);
-
-    //     if (description) std::cout << "GLFW Error: " << description << std::endl;
-    //     std::cout << "GLFW Error code: " << code << std::endl;
-
-    //     fprintf(stderr, "Failed to initialize OpenGL loader!\n");
-    //     return 1;
-    // }
-    // std::cout << "GLFW initialized" << std::endl;
-
     setupImGui(window);
     scaleImGuiStyle();
 
@@ -103,20 +89,24 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
     bool readyToClose = false;
     while (!readyToClose && !glfwWindowShouldClose(window)) {
         glfwPollEvents();
-
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
-
         ImGui::Begin("Sample Window");
-
-        if (ImGui::Button("Click me!")) {
-            printf("Button clicked!\n");
-            readyToClose = true;
+        if (ImGui::BeginTabBar("MyTabBar")) {
+            if (ImGui::BeginTabItem("Button")) {
+                if (ImGui::Button("Click me!")) readyToClose = true;
+                ImGui::EndTabItem();
+            }
+            if (ImGui::BeginTabItem("Text Box")) {
+                static char buf[256] = "";
+                ImGui::InputText("Enter some text", buf, IM_ARRAYSIZE(buf));
+                ImGui::Text("You entered: %s", buf);
+                ImGui::EndTabItem();
+            }
+            ImGui::EndTabBar();
         }
-
         ImGui::End();
-
         ImGui::Render();
         int display_w, display_h;
         glfwGetFramebufferSize(window, &display_w, &display_h);
@@ -124,7 +114,6 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
         glClearColor(clear_color.x, clear_color.y, clear_color.z, clear_color.w);
         glClear(GL_COLOR_BUFFER_BIT);
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-
         glfwSwapBuffers(window);
     }
 

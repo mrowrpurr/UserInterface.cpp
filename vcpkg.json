@@ -22,14 +22,25 @@
             "description": "Build with Qt GUI library",
             "dependencies": ["qtbase", "qtdeclarative"]
         },
-        "imgui": {
-            "description": "Build with Dear ImGUI GUI library",
+        "imgui-glfw3-opengl": {
+            "description": "Build with Dear ImGUI GUI library and GLFW3 and OpenGL3 bindings",
             "dependencies": [
                 {
                     "name": "imgui",
                     "features": ["glfw-binding", "opengl3-binding"]
                 },
                 "glfw3",
+                "opengl"
+            ]
+        },
+        "imgui-sdl2-opengl": {
+            "description": "Build with Dear ImGUI GUI library with SDL2 and OpenGL3 bindings",
+            "dependencies": [
+                {
+                    "name": "imgui",
+                    "features": ["sdl2-binding", "opengl3-binding"]
+                },
+                "sdl2",
                 "opengl"
             ]
         }
