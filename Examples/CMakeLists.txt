@@ -70,6 +70,8 @@ function(sample SampleName)
     add_executable(Examples.${SampleName} ${SampleName}Example.cpp)
     set_target_properties(Examples.${SampleName} PROPERTIES WIN32_EXECUTABLE TRUE)
     link_current_gui_library(Examples.${SampleName})
+    target_link_libraries(Examples.${SampleName} PRIVATE UserInterface Logging)
 endfunction()
 
 add_subdirectory(Window)
+add_subdirectory(Button)
