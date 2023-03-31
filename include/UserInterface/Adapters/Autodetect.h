@@ -1,11 +1,13 @@
 #pragma once
 
-#include "../Config.h"
 #include "../Private/FunctionRunner.h"
+#include "../UIManager.h"
 
-#if __has_include(<nana/gui.hpp>)
-    #include "NanaAdapter.h"
-UserInterface::Private::FunctionRunner __nanaAdapterRegistration([]() {
-    UserInterface::Config::SetAdapter<UserInterface::Adapters::NanaAdapter>();
+#if __has_include(<FL/Fl.H>)
+    #include "FLTKAdapter.h"
+UserInterface::Private::FunctionRunner __fltkAdapterRegistration([]() {
+    auto manager = UserInterface::UIManager::GetInstance()
+                       .GetToolkits()
+                       ->RegisterToolkit<UserInterface::Adapters::FLTKAdapter>("fltk");
 });
 #endif

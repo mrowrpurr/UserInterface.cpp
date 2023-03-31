@@ -4,17 +4,8 @@
 SetLogFilePath("C:/temp/UserInterfaceExample.log");
 
 UI_Main {
-    auto* ui  = UserInferface::GetUIManager();
-    auto* app = ui->CreateApplication();
-
-    // Create a FLTK window
-    auto* fltkWindow = ui->CreateWindow("fltk");
-
-    // Show a Nana window
-    // TODO
-
-    // Try the autodetection
-    // TODO
-
-    app->RunWindow(fltkWindow);
+    auto* ui     = UserInterface::GetUIManager();
+    auto* app    = ui->NewApplication();
+    auto* window = ui->NewWindow();
+    app->RunWindow(window, "fltk");
 }
