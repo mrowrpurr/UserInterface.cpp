@@ -1,51 +1,59 @@
-# Find packages for the selected GUI library
-if(VCPKG_MANIFEST_FEATURES STREQUAL nana)
+if(nana IN_LIST VCPKG_MANIFEST_FEATURES)
     find_package(unofficial-nana CONFIG REQUIRED)
+endif()
 
-elseif(VCPKG_MANIFEST_FEATURES STREQUAL fltk)
+if(fltk IN_LIST VCPKG_MANIFEST_FEATURES)
     find_package(FLTK CONFIG REQUIRED)
+endif()
 
-elseif(VCPKG_MANIFEST_FEATURES STREQUAL wxwidgets)
+if(wxwidgets IN_LIST VCPKG_MANIFEST_FEATURES)
     find_package(wxWidgets CONFIG REQUIRED)
+endif()
 
-elseif(VCPKG_MANIFEST_FEATURES STREQUAL qt)
+# TODO: add another feature for ImGUI SDL2 backend to test both backends
+if(imgui IN_LIST VCPKG_MANIFEST_FEATURES)
+    find_package(imgui CONFIG REQUIRED)
+    find_package(OpenGL REQUIRED)
+    find_package(glfw3 CONFIG REQUIRED)
+endif()
+
+if(qt IN_LIST VCPKG_MANIFEST_FEATURES)
     # TODO: do we need "Qt6" ?
     find_package(Qt6 CONFIG REQUIRED)
     find_package(Qt6Core CONFIG REQUIRED)
     find_package(Qt6Widgets CONFIG REQUIRED)
+endif()
 
-elseif(VCPKG_MANIFEST_FEATURES STREQUAL imgui)
-    find_package(imgui CONFIG REQUIRED)
-    find_package(OpenGL REQUIRED)
-    find_package(glfw3 CONFIG REQUIRED)
-
-elseif(VCPKG_MANIFEST_FEATURES STREQUAL gtkmm)
+if(gtkmm IN_LIST VCPKG_MANIFEST_FEATURES)
     find_package(PkgConfig REQUIRED)
     pkg_check_modules(GTK4 REQUIRED gtk4)
     pkg_check_modules(GTKMM gtkmm-4.0)
-
-else()
-    message(FATAL_ERROR "No GUI library selected")
 endif()
 
-function(link_current_gui_library ExampleProjectName)
-    if(VCPKG_MANIFEST_FEATURES STREQUAL nana)
+function(link_current_gui_libraries ExampleProjectName)
+    if(nana IN_LIST VCPKG_MANIFEST_FEATURES)
         target_link_libraries(${ExampleProjectName} PRIVATE unofficial::nana::nana)
+    endif()
 
-    elseif(VCPKG_MANIFEST_FEATURES STREQUAL fltk)
+    if(fltk IN_LIST VCPKG_MANIFEST_FEATURES)
         target_link_libraries(${ExampleProjectName} PRIVATE fltk fltk_gl fltk_forms)
+    endif()
 
-    elseif(VCPKG_MANIFEST_FEATURES STREQUAL wxwidgets)
+    if(wxwidgets IN_LIST VCPKG_MANIFEST_FEATURES)
         target_link_libraries(${ExampleProjectName} PRIVATE wx::core wx::base)
+    endif()
 
-        target_link_libraries(${ExampleProjectName} PRIVATE Qt::Core Qt::Widgets)
-    elseif(VCPKG_MANIFEST_FEATURES STREQUAL qt)
-    elseif(VCPKG_MANIFEST_FEATURES STREQUAL imgui)
+    if(imgui IN_LIST VCPKG_MANIFEST_FEATURES)
         target_link_libraries(${ExampleProjectName} PRIVATE imgui::imgui)
         target_link_libraries(${ExampleProjectName} PRIVATE glfw)
         target_link_libraries(${ExampleProjectName} PRIVATE OpenGL::GL)
+    endif()
 
-    elseif(VCPKG_MANIFEST_FEATURES STREQUAL gtkmm)
+    if(qt IN_LIST VCPKG_MANIFEST_FEATURES)
+        target_link_libraries(${ExampleProjectName} PRIVATE Qt::Core Qt::Widgets)
+    endif()
+
+    if(gtkmm IN_LIST VCPKG_MANIFEST_FEATURES)
         target_include_directories(${ExampleProjectName} PRIVATE ${GTK4_INCLUDE_DIRS} ${GTKMM_INCLUDE_DIRS})
         target_link_libraries(${ExampleProjectName} PRIVATE ${GTK4_LIBRARIES} ${GTKMM_LIBRARIES})
 
@@ -57,19 +65,13 @@ function(link_current_gui_library ExampleProjectName)
                 "$ENV{VCPKG_ROOT}/packages/${package}_x86-dynamic-by-default/debug/lib"
             )
         endforeach()
-
-    else()
-        message(FATAL_ERROR "No GUI library selected")
     endif()
-endfunction()
-
-function(create_sample)
 endfunction()
 
 function(sample SampleName)
     add_executable(Examples.${SampleName} ${SampleName}Example.cpp)
     set_target_properties(Examples.${SampleName} PROPERTIES WIN32_EXECUTABLE TRUE)
-    link_current_gui_library(Examples.${SampleName})
+    link_current_gui_libraries(Examples.${SampleName})
     target_link_libraries(Examples.${SampleName} PRIVATE UserInterface Logging)
 endfunction()
 
