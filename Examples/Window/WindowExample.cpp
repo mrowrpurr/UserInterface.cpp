@@ -1,71 +1,87 @@
-#include <gtk/gtk.h>
-#include <gtkmm.h>
+#include <Windows.h>
 
-#include <iostream>
+#include <nana/gui.hpp>
+#include <nana/gui/place.hpp>
+#include <nana/gui/widgets/checkbox.hpp>
+#include <nana/gui/widgets/label.hpp>
+#include <nana/gui/widgets/panel.hpp>
+#include <nana/gui/widgets/slider.hpp>
+#include <nana/gui/widgets/tabbar.hpp>
+#include <nana/gui/widgets/textbox.hpp>
 
-//
-// #include <Windows.h>
+int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
+    using namespace nana;
 
-// class SimpleWindow : public Gtk::ApplicationWindow {
-// public:
-//     SimpleWindow() {
-//         set_title("Simple Gtkmm App");
-//         set_default_size(200, 100);
+    form fm{API::make_center(500, 300)};
+    fm.caption("Nana GUI Sample");
 
-//         button.set_label("Click me!");
-//         button.signal_clicked().connect(sigc::mem_fun(*this, &SimpleWindow::on_button_click));
+    tabbar<std::string> tab(fm);
+    tab.push_back("Form");
+    tab.push_back("Controls");
 
-//         set_child(button);
-//         button.show();
-//     }
+    panel<true> form_panel(fm);
+    panel<true> controls_panel(fm);
 
-// protected:
-//     void on_button_click() { std::cout << "Button clicked!" << std::endl; }
+    // Form layout
+    place form_place{form_panel};
+    form_place.div("vert <labels gap=5><inputs gap=5>");
 
-//     Gtk::Button button;
-// };
+    label   name_label{form_panel, "Name:"};
+    textbox name_box{form_panel};
 
-// class SimpleApp : public Gtk::Application {
-// protected:
-//     Glib::RefPtr<Gtk::ApplicationWindow> create_window() {
-//         return Glib::make_refptr_for_instance<SimpleWindow>(new SimpleWindow());
-//     }
-// };
+    label   age_label{form_panel, "Age:"};
+    textbox age_box{form_panel};
 
-#include <gtkmm/button.h>
-#include <gtkmm/window.h>
+    form_place["labels"] << name_label << age_label;
+    form_place["inputs"] << name_box << age_box;
+    form_place.div("vert <labels max=20 gap=10><inputs max=30 gap=10><btn margin=10>");
+    form_place.collocate();
 
-// class HelloWorld : public Gtk::Window {
-// public:
-//     HelloWorld();
-//     ~HelloWorld() override;
+    // Controls layout
+    place controls_place{controls_panel};
+    controls_place.div("vert <sliders gap=5 max=30><radios gap=5 max=30><checkboxes gap=5 max=30>");
 
-// protected:
-//     // Signal handlers:
-//     void on_button_clicked();
+    label  slider_label{controls_panel, "Slider:"};
+    slider slider_ctrl{controls_panel};
 
-//     // Member widgets:
-//     Gtk::Button m_button;
-// };
+    label       radio_label{controls_panel, "Radio Group:"};
+    radio_group radio_grp;
+    checkbox    radio1{controls_panel, "Option 1"};
+    checkbox    radio2{controls_panel, "Option 2"};
+    radio_grp.add(radio1);
+    radio_grp.add(radio2);
 
-// // int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
-// int main(int argc, char* argv[]) {
-//     // auto app = Gtk::Application::create("com.mp.HelloWorld");
-//     // return app->make_window_and_run<HelloWorld>(argc, argv);
-//     auto app = Gtk::Application::create(argc, argv, "");
-// }
+    label    checkbox_label{controls_panel, "Checkbox:"};
+    checkbox checkbox_ctrl{controls_panel, "Enable"};
 
-class Win : public Gtk::Window {
-public:
-    Win();
-};
+    controls_place["sliders"] << slider_label << slider_ctrl;
+    controls_place["radios"] << radio_label << radio1 << radio2;
+    controls_place["checkboxes"] << checkbox_label << checkbox_ctrl;
 
-Win::Win() {
-    set_title("Hello world");
-    set_default_size(500, 500);
-}
+    controls_place.collocate();
 
-int main(int argc, char* argv[]) {
-    auto app = Gtk::Application::create("org.gtkmm.examples.base");
-    return app->make_window_and_run<Win>(argc, argv);
+    // Tab events
+    tab.events().activated([&](const arg_tabbar<std::string>& bar) {
+        if (bar.item_pos == 0) {
+            form_panel.show();
+            controls_panel.hide();
+        } else {
+            form_panel.hide();
+            controls_panel.show();
+        }
+    });
+
+    // Layout for the main form
+    place main_place{fm};
+    main_place.div("vert <tab weight=30><panel margin=10>");
+    main_place["tab"] << tab;
+    main_place["panel"].fasten(form_panel).fasten(controls_panel);
+    main_place.collocate();
+
+    // Set initial state
+    tab.activated(0);
+    fm.show();
+
+    exec();
+    return 0;
 }
