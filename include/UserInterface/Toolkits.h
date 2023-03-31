@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Logging.h>
+// #include <Logging.h>
 
 #include <memory>
 #include <string>
@@ -20,7 +20,7 @@ namespace UserInterface {
         bool RegisterToolkit(const char* name, void* toolkit) {
             auto registeredName = NormalizeName(name);
             if (_toolkits.find(registeredName) != _toolkits.end()) {
-                Log("Toolkit '{}' already registered", name);
+                // Log("Toolkit '{}' already registered", name);
                 return false;
             }
             _toolkits[registeredName] =
@@ -36,7 +36,7 @@ namespace UserInterface {
         bool UnregisterToolkit(const char* name) {
             auto registeredName = NormalizeName(name);
             if (_toolkits.find(registeredName) == _toolkits.end()) {
-                Log("Toolkit '{}' not registered", name);
+                // Log("Toolkit '{}' not registered", name);
                 return false;
             }
             _toolkits.erase(registeredName);
@@ -46,7 +46,7 @@ namespace UserInterface {
         IToolkit* GetToolkit(const char* name) {
             auto registeredName = NormalizeName(name);
             if (_toolkits.find(registeredName) == _toolkits.end()) {
-                Log("Toolkit '{}' not registered", name);
+                // Log("Toolkit '{}' not registered", name);
                 return nullptr;
             }
             return _toolkits[registeredName].get();
