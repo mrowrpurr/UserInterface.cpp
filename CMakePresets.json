@@ -63,6 +63,11 @@
             "cacheVariables": { "VCPKG_MANIFEST_FEATURES": "imgui" }
         },
         {
+            "name": "small-frameworks",
+            "hidden": true,
+            "cacheVariables": { "VCPKG_MANIFEST_FEATURES": "nana;fltk;wxwidgets;imgui" }
+        },
+        {
             "name": "nana-x86",
             "inherits": ["base", "x86", "nana"]
         },
@@ -113,6 +118,14 @@
         {
             "name": "imgui-x64",
             "inherits": ["base", "x64", "imgui"]
+        },
+        {
+            "name": "small-frameworks-x86",
+            "inherits": ["base", "x86", "small-frameworks"]
+        },
+        {
+            "name": "small-frameworks-x64",
+            "inherits": ["base", "x64", "small-frameworks"]
         }
     ]
 }
