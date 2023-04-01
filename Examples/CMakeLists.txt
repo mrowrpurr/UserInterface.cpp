@@ -21,9 +21,6 @@ if(imgui-sdl2-opengl IN_LIST VCPKG_MANIFEST_FEATURES)
     find_package(imgui CONFIG REQUIRED)
     find_package(OpenGL REQUIRED)
     find_package(SDL2 CONFIG REQUIRED)
-
-    # message(STATUS "INCLUDE DIRS ${SDL2_INCLUDE_DIRS}")
-    # message(STATUS "LIBRARIES: ${SDL2_LIBRARIES}")
     find_package(GLEW REQUIRED)
 endif()
 
@@ -62,15 +59,8 @@ function(link_current_gui_libraries ExampleProjectName)
     if(imgui-sdl2-opengl IN_LIST VCPKG_MANIFEST_FEATURES)
         target_link_libraries(${ExampleProjectName} PRIVATE imgui::imgui)
         target_link_libraries(${ExampleProjectName} PRIVATE OpenGL::GL)
-        message(STATUS "I AM HERE")
         target_link_libraries(${ExampleProjectName} PRIVATE SDL2::SDL2-static)
         target_link_libraries(${ExampleProjectName} PRIVATE GLEW::GLEW)
-        target_include_directories(${ExampleProjectName} PRIVATE ${SDL2_INCLUDE_DIRS})
-        target_link_directories(
-            ${ExampleProjectName}
-            PRIVATE
-            "$ENV{VCPKG_ROOT}/packages/sdl2_x86-windows-static-md/lib"
-        )
     endif()
 
     if(qt IN_LIST VCPKG_MANIFEST_FEATURES)
