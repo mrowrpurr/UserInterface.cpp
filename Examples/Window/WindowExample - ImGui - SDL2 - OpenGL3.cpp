@@ -1,3 +1,4 @@
+#include <GL/glew.h>
 #include <SDL.h>
 #include <SDL_opengl.h>
 
@@ -6,8 +7,7 @@
 
 #include "imgui.h"
 #include "imgui_impl_opengl3.h"
-#include "imgui_impl_sdl.h"
-
+#include "imgui_impl_sdl2.h"
 
 // OpenGL 3.0 or higher
 const char* glsl_version = "#version 130";
@@ -113,13 +113,14 @@ int main(int, char**) {
             ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
             SDL_GL_SwapWindow(window);
         }
-
-        ImGui_ImplOpenGL3_Shutdown();
-        ImGui_ImplSDL2_Shutdown();
-        ImGui::DestroyContext();
-
-        SDL_GL_DeleteContext(gl_context);
-        SDL_DestroyWindow(window);
-        SDL_Quit();
-        return 0;
     }
+
+    ImGui_ImplOpenGL3_Shutdown();
+    ImGui_ImplSDL2_Shutdown();
+    ImGui::DestroyContext();
+
+    SDL_GL_DeleteContext(gl_context);
+    SDL_DestroyWindow(window);
+    SDL_Quit();
+    return 0;
+}
