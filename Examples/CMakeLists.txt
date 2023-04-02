@@ -36,7 +36,9 @@ function(example ExampleName)
     endif()
 
     if(qt IN_LIST VCPKG_MANIFEST_FEATURES)
-        # target_link_libraries(${PROJECT_NAME} PRIVATE Qt::Core Qt::Widgets)
+        find_package(Qt6 COMPONENTS Core Widgets REQUIRED)
+        target_link_libraries(${target_name} PRIVATE Qt6::Core Qt6::Widgets)
+        target_link_libraries(${target_name} PRIVATE UserInterface.Qt)
     endif()
 
     if(gtkmm IN_LIST VCPKG_MANIFEST_FEATURES)
