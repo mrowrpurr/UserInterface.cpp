@@ -21,6 +21,8 @@ namespace UserInterface::Impl {
         }
 
     public:
+        size_t GetToolkitCount() override { return _toolkits.size(); }
+
         bool IsToolkitAvailable(const char* toolkitName) override {
             auto registryName = NormalizeName(toolkitName);
             return _toolkits.find(registryName) != _toolkits.end();
@@ -33,19 +35,20 @@ namespace UserInterface::Impl {
             return it->second.get();
         }
 
-        bool RegisterToolkit(const char* toolkitName, UIToolkit* toolkit) override {
-            auto registryName = NormalizeName(toolkitName);
-            if (IsToolkitAvailable(toolkitName)) return false;
-            _toolkits[registryName] = std::unique_ptr<UIToolkit>(toolkit);
-            return true;
-        }
-
         const char* GetDefaultToolkitName() override { return _defaultToolkitName.c_str(); }
 
         bool SetDefaultToolkitName(const char* toolkitName) override {
             auto registryName = NormalizeName(toolkitName);
             if (!IsToolkitAvailable(toolkitName)) return false;
             _defaultToolkitName = registryName;
+            return true;
+        }
+
+        bool RegisterToolkit(const char* toolkitName, UIToolkit* toolkit) override {
+            auto registryName = NormalizeName(toolkitName);
+            if (IsToolkitAvailable(toolkitName)) return false;
+            _toolkits[registryName] = std::unique_ptr<UIToolkit>(toolkit);
+            if (_defaultToolkitName.empty()) _defaultToolkitName = registryName;
             return true;
         }
     };
@@ -58,6 +61,11 @@ namespace UserInterface::Impl {
             UIToolkit* toolkit = _toolkitRegistry.GetToolkit(toolkitName);
             if (!toolkit) return nullptr;
             return toolkit->GetApplication();
+        }
+
+        UIApplication* GetApplication() override {
+            const char* defaultToolkitName = _toolkitRegistry.GetDefaultToolkitName();
+            return GetApplication(defaultToolkitName);
         }
 
         UIToolkitRegistry* GetToolkitRegistry() override { return &_toolkitRegistry; }

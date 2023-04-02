@@ -21,6 +21,7 @@ namespace UserInterface {
     };
 
     struct UIToolkitRegistry {
+        virtual size_t      GetToolkitCount()                                            = 0;
         virtual bool        IsToolkitAvailable(const char* toolkitName)                  = 0;
         virtual UIToolkit*  GetToolkit(const char* toolkitName)                          = 0;
         virtual bool        RegisterToolkit(const char* toolkitName, UIToolkit* toolkit) = 0;
@@ -29,6 +30,7 @@ namespace UserInterface {
     };
 
     struct UIAPI {
+        virtual UIApplication*     GetApplication()                        = 0;
         virtual UIApplication*     GetApplication(const char* toolkitName) = 0;
         virtual UIToolkitRegistry* GetToolkitRegistry()                    = 0;
     };

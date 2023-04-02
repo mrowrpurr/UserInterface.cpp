@@ -11,7 +11,7 @@ namespace UserInterface::ToolkitRegistration::Private {
     };
 }
 
-#define RegisterToolkit(name, toolkitClassName)                             \
+#define UserInterface_RegisterToolkit(name, toolkitClassName)               \
     UserInterface::ToolkitRegistration::Private::FunctionRunner             \
         __RegisterUserInterfaceTookkit_##name([]() {                        \
             UserInterface::GetAPI()->GetToolkitRegistry()->RegisterToolkit( \
