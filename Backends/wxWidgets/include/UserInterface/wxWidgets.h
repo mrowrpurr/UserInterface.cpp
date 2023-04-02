@@ -45,18 +45,18 @@ namespace UserInterface::wxWidgets {
     }
 
     class Label : public UILabel {
-        std::unique_ptr<wxStaticText>& _label;
+        std::unique_ptr<wxStaticText> _label;
 
     public:
-        Label(std::unique_ptr<wxStaticText>& label) : _label(label) {}
+        Label(std::unique_ptr<wxStaticText> label) : _label(std::move(label)) {}
         void SetText(const char* text) { _label->SetLabelText(text); }
     };
 
     class Textbox : public UITextbox {
-        std::unique_ptr<wxTextCtrl>& _textbox;
+        std::unique_ptr<wxTextCtrl> _textbox;
 
     public:
-        Textbox(std::unique_ptr<wxTextCtrl>& textbox) : _textbox(textbox) {}
+        Textbox(std::unique_ptr<wxTextCtrl> textbox) : _textbox(std::move(textbox)) {}
         void SetText(const char* text) { _textbox->SetValue(text); }
     };
 
@@ -70,17 +70,17 @@ namespace UserInterface::wxWidgets {
         std::vector<std::unique_ptr<UIWidget>>& GetWidgets() { return _widgets; }
 
         UILabel* AddLabel(const char* text) override {
-            auto label =
+            auto labelImpl =
                 std::make_unique<wxStaticText>(_sizer->GetContainingWindow(), wxID_ANY, text);
-            _sizer->Add(label.get(), 0, wxEXPAND | wxALL, 5);
-            _widgets.emplace_back(std::make_unique<Label>(label));
+            _sizer->Add(labelImpl.get(), 0, wxEXPAND | wxALL, 5);
+            _widgets.emplace_back(std::make_unique<Label>(std::move(labelImpl)));
             return static_cast<UILabel*>(_widgets.back().get());
         }
 
         UITextbox* AddTextbox(const char* text) override {
             auto textbox = std::make_unique<wxTextCtrl>(_sizer->GetContainingWindow(), wxID_ANY);
             _sizer->Add(textbox.get(), 0, wxEXPAND | wxALL, 5);
-            _widgets.emplace_back(std::make_unique<Textbox>(textbox));
+            _widgets.emplace_back(std::make_unique<Textbox>(std::move(textbox)));
             return static_cast<UITextbox*>(_widgets.back().get());
         }
     };
@@ -133,15 +133,7 @@ namespace UserInterface::wxWidgets {
             return nullptr;
         }
 
-        UILabel* AddLabel(const char* text) override {
-            // return WidgetContainer::AddLabel(text);
-
-            auto label =
-                std::make_unique<wxStaticText>(_sizer->GetContainingWindow(), wxID_ANY, text);
-            _sizer->Add(label.get(), 0, wxEXPAND | wxALL, 5);
-            GetWidgets().emplace_back(std::make_unique<Label>(label));
-            return static_cast<UILabel*>(GetWidgets().back().get());
-        }
+        UILabel*   AddLabel(const char* text) override { return WidgetContainer::AddLabel(text); }
         UITextbox* AddTextbox(const char* text) override {
             return WidgetContainer::AddTextbox(text);
         }
