@@ -11,7 +11,7 @@ function(example ExampleName)
     target_link_libraries(${target_name} PRIVATE Logging)
 
     if(nana IN_LIST VCPKG_MANIFEST_FEATURES)
-        # target_link_libraries(${PROJECT_NAME} PRIVATE unofficial::nana::nana)
+        target_link_libraries(${target_name} PRIVATE UserInterface.Nana)
     endif()
 
     if(fltk IN_LIST VCPKG_MANIFEST_FEATURES)
@@ -36,8 +36,12 @@ function(example ExampleName)
     endif()
 
     if(qt IN_LIST VCPKG_MANIFEST_FEATURES)
+        # Must require Qt6 and link to it before linking to UserInterface.Qt (or it explodes)
+        # (Bug due to a broken generator expression when using INTERFACE targets)
         find_package(Qt6 COMPONENTS Core Widgets REQUIRED)
         target_link_libraries(${target_name} PRIVATE Qt6::Core Qt6::Widgets)
+
+        #
         target_link_libraries(${target_name} PRIVATE UserInterface.Qt)
     endif()
 

@@ -10,15 +10,15 @@ if(qt IN_LIST VCPKG_MANIFEST_FEATURES)
     add_subdirectory(Qt)
 endif()
 
-# ###############################################
-# ###############################################
-# ###############################################
-# ###############################################
-# ###############################################
 if(nana IN_LIST VCPKG_MANIFEST_FEATURES)
-    # find_package(unofficial-nana CONFIG REQUIRED)
+    add_subdirectory(Nana)
 endif()
 
+# ###############################################
+# ###############################################
+# ###############################################
+# ###############################################
+# ###############################################
 if(gtkmm IN_LIST VCPKG_MANIFEST_FEATURES)
     # find_package(PkgConfig REQUIRED)
     # pkg_check_modules(GTK4 REQUIRED gtk4)
