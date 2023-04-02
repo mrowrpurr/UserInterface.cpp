@@ -7,7 +7,6 @@
 #include "Toolkits.h"
 #include "Window.h"
 
-
 namespace UserInterface {
 
     class UIManager {
@@ -30,7 +29,7 @@ namespace UserInterface {
 
         Toolkits* GetToolkits() { return &_toolkits; }
 
-        Application* NewApplication() {
+        Application* GetApplication() {
             _applications.emplace_back(std::make_shared<Application>(&_toolkits));
             return _applications.back().get();
         }

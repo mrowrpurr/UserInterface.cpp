@@ -42,10 +42,10 @@ namespace UserInterface::Impl {
         ToolkitRegistryImpl _toolkitRegistry;
 
     public:
-        UIApplication* NewApplication(const char* toolkitName) override {
+        UIApplication* GetApplication(const char* toolkitName) override {
             UIToolkit* toolkit = _toolkitRegistry.GetToolkit(toolkitName);
             if (!toolkit) return nullptr;
-            return toolkit->NewApplication();
+            return toolkit->GetApplication();
         }
 
         UIToolkitRegistry* GetToolkitRegistry() override { return &_toolkitRegistry; }

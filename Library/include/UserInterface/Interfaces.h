@@ -5,18 +5,19 @@ namespace UserInterface {
     struct UIApplication;
 
     struct UIWindow {
+        virtual const char*    GetId()                     = 0;
         virtual UIApplication* GetApplication()            = 0;
         virtual bool           Show()                      = 0;
         virtual bool           SetTitle(const char* title) = 0;
     };
 
     struct UIApplication {
-        virtual UIWindow* NewWindow() = 0;
-        virtual bool      Run()       = 0;
+        virtual UIWindow* NewWindow(const char* windowId) = 0;
+        virtual void      Run()                           = 0;
     };
 
     struct UIToolkit {
-        virtual UIApplication* NewApplication() = 0;
+        virtual UIApplication* GetApplication() = 0;
     };
 
     struct UIToolkitRegistry {
@@ -28,7 +29,7 @@ namespace UserInterface {
     };
 
     struct UIAPI {
-        virtual UIApplication*     NewApplication(const char* toolkitName) = 0;
+        virtual UIApplication*     GetApplication(const char* toolkitName) = 0;
         virtual UIToolkitRegistry* GetToolkitRegistry()                    = 0;
     };
 }
