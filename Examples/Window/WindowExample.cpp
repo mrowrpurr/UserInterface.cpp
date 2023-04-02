@@ -7,15 +7,22 @@ SetLogFilePath("C:/temp/UserInterfaceExample.log");
 UI_Main {
     auto* ui     = UserInterface::GetAPI();
     auto* app    = ui->GetApplication();
-    auto* window = app->NewWindow("Some Window ID");
+    auto* window = app->NewWindow("");
     window->SetTitle("Hello from the Example Title");
 
+    // Add a label, textbox, and button to the window
+    window->AddLabel("Hi, I am a label!");
+
+    // hmmm
+    window->AddTextbox("Butts.");
+
     // Make 2 tabs (UIWidgetsContainer)
-    auto* tab1 = window->NewTab("Tab 1");
+    // auto* tab1 = window->AddTab("Tab 1");
+    // auto* tab2 = window->AddTab("Tab 2");
 
-    // Add textbox to each (UIWidget)
+    // Add a label to the first tab
 
-    // Add button to each (UIButton)
+    // Add a textbox and button to the second tab
 
     app->Run();
 }

@@ -1,19 +1,32 @@
 #pragma once
 
 #include <UserInterface/Interfaces.h>
+#include <wx/notebook.h>
 #include <wx/wx.h>
 
 #include <memory>
 #include <string>
 #include <unordered_map>
+#include <vector>
 
 namespace UserInterface::wxWidgets {
 
     namespace Impl {
         class wxWindowImpl : public wxFrame {
+            std::unique_ptr<wxNotebook>           _notebook;
+            std::vector<std::unique_ptr<wxPanel>> _notebookPanels;
+
         public:
             wxWindowImpl(const wxString& title)
                 : wxFrame(NULL, wxID_ANY, title, wxDefaultPosition, wxSize(300, 200)) {}
+
+            void ConfigureForTabs() { _notebook = std::make_unique<wxNotebook>(this, wxID_ANY); }
+
+            std::unique_ptr<wxPanel>& AddTab(const char* tabName) {
+                _notebookPanels.emplace_back(std::make_unique<wxPanel>(_notebook.get(), wxID_ANY));
+                _notebook->AddPage(_notebookPanels.back().get(), tabName);
+                return _notebookPanels.back();
+            }
         };
 
         class wxApplicationImpl : public wxApp {
@@ -31,26 +44,77 @@ namespace UserInterface::wxWidgets {
         };
     }
 
-    class Tab : public UITab {
-        std::string _id;
-        std::string _name;
+    class Label : public UILabel {
+        std::unique_ptr<wxStaticText>& _label;
 
     public:
-        Tab(const char* id) : _id(id) {}
-        const char* GetTitle() override { return _name.c_str(); }
-        void        SetTitle(const char* title) override { _name = title; }
+        Label(std::unique_ptr<wxStaticText>& label) : _label(label) {}
+        void SetText(const char* text) { _label->SetLabelText(text); }
     };
 
-    class Window : public UIWindow {
-        std::string                         _id;
-        std::shared_ptr<Impl::wxWindowImpl> _impl;
+    class Textbox : public UITextbox {
+        std::unique_ptr<wxTextCtrl>& _textbox;
 
     public:
-        Window(const char* id) : _id(id), _impl(std::make_unique<Impl::wxWindowImpl>(id)) {}
+        Textbox(std::unique_ptr<wxTextCtrl>& textbox) : _textbox(textbox) {}
+        void SetText(const char* text) { _textbox->SetValue(text); }
+    };
 
-        Window(const char* id, std::shared_ptr<Impl::wxWindowImpl> impl) : _id(id), _impl(impl) {}
+    class WidgetContainer : public UIWidgetContainer {
+        std::unique_ptr<wxBoxSizer>&           _sizer;
+        std::vector<std::unique_ptr<UIWidget>> _widgets;
 
-        const char* GetId() override { return _id.c_str(); }
+    public:
+        WidgetContainer(std::unique_ptr<wxBoxSizer>& sizer) : _sizer(sizer) {}
+        std::unique_ptr<wxBoxSizer>&            GetImplContainer() { return _sizer; }
+        std::vector<std::unique_ptr<UIWidget>>& GetWidgets() { return _widgets; }
+
+        UILabel* AddLabel(const char* text) override {
+            auto label =
+                std::make_unique<wxStaticText>(_sizer->GetContainingWindow(), wxID_ANY, text);
+            _sizer->Add(label.get(), 0, wxEXPAND | wxALL, 5);
+            _widgets.emplace_back(std::make_unique<Label>(label));
+            return static_cast<UILabel*>(_widgets.back().get());
+        }
+
+        UITextbox* AddTextbox(const char* text) override {
+            auto textbox = std::make_unique<wxTextCtrl>(_sizer->GetContainingWindow(), wxID_ANY);
+            _sizer->Add(textbox.get(), 0, wxEXPAND | wxALL, 5);
+            _widgets.emplace_back(std::make_unique<Textbox>(textbox));
+            return static_cast<UITextbox*>(_widgets.back().get());
+        }
+    };
+
+    class Window;
+
+    class Tab : public UITab, public WidgetContainer {
+        std::string _title;
+        // std::unique_ptr<wxBoxSizer>&                               _sizer;
+        // std::unordered_map<std::string, std::unique_ptr<UIWidget>> _widgets;
+        // std::unique_ptr<WidgetContainer>                           _container;
+
+    public:
+        // Tab(const char* title, std::unique_ptr<wxBoxSizer>& sizer) : _title(title), _sizer(sizer)
+        // {
+        //     _container = std::make_unique<WidgetContainer>(_sizer);
+        // }
+
+        Tab(const char* title, std::unique_ptr<wxBoxSizer>& sizer) : WidgetContainer(sizer) {
+            _title = title;
+        }
+
+        const char* GetTitle() override { return _title.c_str(); }
+        void        SetTitle(const char* title) override { _title = title; }
+    };
+
+    class Window : public UIWindow, public WidgetContainer {
+        std::shared_ptr<Impl::wxWindowImpl> _impl;
+        std::vector<std::unique_ptr<Tab>>   _tabs;
+        std::unique_ptr<wxBoxSizer>         _sizer;
+
+    public:
+        Window(std::shared_ptr<Impl::wxWindowImpl> impl, std::unique_ptr<wxBoxSizer> sizer)
+            : WidgetContainer(_sizer), _impl(impl), _sizer(std::move(sizer)) {}
 
         bool Show() override {
             _impl->Show(true);
@@ -62,18 +126,30 @@ namespace UserInterface::wxWidgets {
             return true;
         }
 
-        UIWidget* AddWidget(const char* widgetType, const char* widgetId) override {
+        UITab* AddTab(const char*) override {
+            // _impl->ConfigureForTabs();
+            // _tabs.emplace_back(std::make_unique<Tab>(title, _impl->AddTab(title)));
+            // return _tabs.back().get();
             return nullptr;
         }
 
-        UITab* NewTab(const char* tabId, const char* tabName) override { return nullptr; }
+        UILabel* AddLabel(const char* text) override {
+            // return WidgetContainer::AddLabel(text);
+
+            auto label =
+                std::make_unique<wxStaticText>(_sizer->GetContainingWindow(), wxID_ANY, text);
+            _sizer->Add(label.get(), 0, wxEXPAND | wxALL, 5);
+            GetWidgets().emplace_back(std::make_unique<Label>(label));
+            return static_cast<UILabel*>(GetWidgets().back().get());
+        }
+        UITextbox* AddTextbox(const char* text) override {
+            return WidgetContainer::AddTextbox(text);
+        }
     };
 
     class Application : public UIApplication {
-        // wxWidgets is responsible for the destruction of the wxApp instance
-        Impl::wxApplicationImpl* _impl;
-
-        std::unordered_map<std::string, std::unique_ptr<Window>> _windows;
+        Impl::wxApplicationImpl*             _impl;  // wxWidgets responsible for the destruction
+        std::vector<std::unique_ptr<Window>> _windows;
 
     public:
         Application() : _impl(new Impl::wxApplicationImpl()) {}
@@ -91,13 +167,20 @@ namespace UserInterface::wxWidgets {
             wxEntryCleanup();
         }
 
-        UIWindow* NewWindow(const char* windowId) override {
-            if (_windows.empty())
-                _windows.emplace(
-                    windowId, std::make_unique<Window>(windowId, _impl->GetMainWindow())
-                );
-            else _windows.emplace(windowId, std::make_unique<Window>(windowId));
-            return _windows.at(windowId).get();
+        UIWindow* NewWindow(const char* title) override {
+            if (_windows.empty()) {
+                auto mainWindow = _impl->GetMainWindow();
+                mainWindow->SetTitle(title);
+                auto sizer = std::make_unique<wxBoxSizer>(wxVERTICAL);
+                mainWindow->SetSizer(sizer.get());
+                _windows.emplace_back(std::make_unique<Window>(mainWindow, std::move(sizer)));
+            } else {
+                auto windowImpl = std::make_shared<Impl::wxWindowImpl>(title);
+                auto sizer      = std::make_unique<wxBoxSizer>(wxVERTICAL);
+                windowImpl->SetSizer(sizer.get());
+                _windows.emplace_back(std::make_unique<Window>(windowImpl, std::move(sizer)));
+            }
+            return _windows.back().get();
         }
     };
 
