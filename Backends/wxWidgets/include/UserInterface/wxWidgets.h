@@ -17,7 +17,7 @@ namespace UserInterface::wxWidgets {
         };
 
         class wxApplicationImpl : public wxApp {
-            wxWindowImpl* _mainWindow;
+            std::shared_ptr<wxWindowImpl> _mainWindow;
 
         public:
             wxApplicationImpl() : _mainWindow(new wxWindowImpl("")) {}
@@ -27,21 +27,30 @@ namespace UserInterface::wxWidgets {
                 return true;
             }
 
-            wxWindowImpl* GetMainWindow() { return _mainWindow; }
+            std::shared_ptr<wxWindowImpl> GetMainWindow() { return _mainWindow; }
         };
     }
 
-    class Window : public UIWindow {
-        std::string         _id;
-        Impl::wxWindowImpl* _impl;
+    class Tab : public UITab {
+        std::string _id;
+        std::string _name;
 
     public:
-        Window(const char* id) : _id(id), _impl(new Impl::wxWindowImpl(id)) {}
-        Window(const char* id, Impl::wxWindowImpl* impl) : _id(id), _impl(impl) {}
+        Tab(const char* id) : _id(id) {}
+        const char* GetTitle() override { return _name.c_str(); }
+        void        SetTitle(const char* title) override { _name = title; }
+    };
+
+    class Window : public UIWindow {
+        std::string                         _id;
+        std::shared_ptr<Impl::wxWindowImpl> _impl;
+
+    public:
+        Window(const char* id) : _id(id), _impl(std::make_unique<Impl::wxWindowImpl>(id)) {}
+
+        Window(const char* id, std::shared_ptr<Impl::wxWindowImpl> impl) : _id(id), _impl(impl) {}
 
         const char* GetId() override { return _id.c_str(); }
-
-        UIApplication* GetApplication() override { return nullptr; }
 
         bool Show() override {
             _impl->Show(true);
@@ -52,10 +61,18 @@ namespace UserInterface::wxWidgets {
             _impl->SetTitle(title);
             return true;
         }
+
+        UIWidget* AddWidget(const char* widgetType, const char* widgetId) override {
+            return nullptr;
+        }
+
+        UITab* NewTab(const char* tabId, const char* tabName) override { return nullptr; }
     };
 
     class Application : public UIApplication {
-        Impl::wxApplicationImpl*                                 _impl;
+        // wxWidgets is responsible for the destruction of the wxApp instance
+        Impl::wxApplicationImpl* _impl;
+
         std::unordered_map<std::string, std::unique_ptr<Window>> _windows;
 
     public:
@@ -76,7 +93,9 @@ namespace UserInterface::wxWidgets {
 
         UIWindow* NewWindow(const char* windowId) override {
             if (_windows.empty())
-                _windows.emplace(windowId, new Window(windowId, _impl->GetMainWindow()));
+                _windows.emplace(
+                    windowId, std::make_unique<Window>(windowId, _impl->GetMainWindow())
+                );
             else _windows.emplace(windowId, std::make_unique<Window>(windowId));
             return _windows.at(windowId).get();
         }
