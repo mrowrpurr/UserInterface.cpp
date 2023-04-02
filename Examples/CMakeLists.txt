@@ -15,7 +15,7 @@ function(example ExampleName)
     endif()
 
     if(fltk IN_LIST VCPKG_MANIFEST_FEATURES)
-        # target_link_libraries(${PROJECT_NAME} PRIVATE fltk fltk_gl fltk_forms)
+        target_link_libraries(${target_name} PRIVATE UserInterface.FLTK)
     endif()
 
     if(wxwidgets IN_LIST VCPKG_MANIFEST_FEATURES)
