@@ -1,1 +1,1 @@
-sample(Window)
+example(Window)

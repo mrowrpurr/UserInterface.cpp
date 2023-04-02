@@ -1,50 +1,47 @@
 cmake_minimum_required(VERSION 3.21)
 
-project(UserInterface VERSION 0.1.0 LANGUAGES CXX)
+project(UserInterface-Project LANGUAGES CXX)
 
-add_library(${PROJECT_NAME} INTERFACE)
-
-# Include my Logging library for help developing this stuffs...
-find_package(spdlog CONFIG REQUIRED)
+# Logging library [at least temporarily...]
 add_subdirectory("$ENV{LOGGING_LIBRARY}" "${CMAKE_CURRENT_BINARY_DIR}/LoggingLibrary")
-message(STATUS "Logging library: $ENV{LOGGING_LIBRARY}")
-target_link_libraries(${PROJECT_NAME} INTERFACE Logging spdlog::spdlog)
 
-target_include_directories(
-    ${PROJECT_NAME}
-    INTERFACE
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-    $<INSTALL_INTERFACE:include>
-)
+if(nana IN_LIST VCPKG_MANIFEST_FEATURES)
+    find_package(unofficial-nana CONFIG REQUIRED)
+endif()
 
-# include(GNUInstallDirs)
+if(fltk IN_LIST VCPKG_MANIFEST_FEATURES)
+    find_package(FLTK CONFIG REQUIRED)
+endif()
 
-# install(DIRECTORY include DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/..")
+if(wxwidgets IN_LIST VCPKG_MANIFEST_FEATURES)
+endif()
 
-# install(
-# TARGETS ${PROJECT_NAME}
-# EXPORT ${PROJECT_NAME}-targets
-# ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-# LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-# RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-# )
+if(imgui-glfw3-opengl IN_LIST VCPKG_MANIFEST_FEATURES)
+    find_package(imgui CONFIG REQUIRED)
+    find_package(OpenGL REQUIRED)
+    find_package(glfw3 CONFIG REQUIRED)
+endif()
 
-# install(
-# EXPORT ${PROJECT_NAME}-targets
-# FILE ${PROJECT_NAME}-targets.cmake
-# NAMESPACE "${PROJECT_NAME}::"
-# DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake"
-# )
+if(imgui-sdl2-opengl IN_LIST VCPKG_MANIFEST_FEATURES)
+    find_package(imgui CONFIG REQUIRED)
+    find_package(OpenGL REQUIRED)
+    find_package(SDL2 CONFIG REQUIRED)
+    find_package(GLEW REQUIRED)
+endif()
 
-# configure_file(
-# cmake/Config.cmake.in
-# ${PROJECT_NAME}Config.cmake
-# @ONLY
-# )
+if(qt IN_LIST VCPKG_MANIFEST_FEATURES)
+    # TODO: do we need "Qt6" ?
+    find_package(Qt6 CONFIG REQUIRED)
+    find_package(Qt6Core CONFIG REQUIRED)
+    find_package(Qt6Widgets CONFIG REQUIRED)
+endif()
 
-# install(
-# FILES
-# "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Config.cmake"
-# DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake"
-# )
+if(gtkmm IN_LIST VCPKG_MANIFEST_FEATURES)
+    find_package(PkgConfig REQUIRED)
+    pkg_check_modules(GTK4 REQUIRED gtk4)
+    pkg_check_modules(GTKMM gtkmm-4.0)
+endif()
+
+add_subdirectory(Library)
+add_subdirectory(Backends)
 add_subdirectory(Examples)
