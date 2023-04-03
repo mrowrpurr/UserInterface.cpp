@@ -12,15 +12,15 @@ UI_Main {
     auto* window = app->NewWindow("");
     window->SetTitle("Hello from the Example Title");
 
-    window->AddLabel("Hi, I am a label!");
-    textbox = window->AddTextbox("Butts.");
-    window->AddButton("I am button! CLICK ME", []() {
-        textbox->SetText("The button was pressed!");
-    });
+    // window->AddLabel("Hi, I am a label!");
+    // textbox = window->AddTextbox("Butts.");
+    // window->AddButton("I am button! CLICK ME", []() {
+    //     textbox->SetText("The button was pressed!");
+    // });
 
     // Make 2 tabs (UIWidgetsContainer)
-    // auto* tab1 = window->AddTab("Tab 1");
-    // auto* tab2 = window->AddTab("Tab 2");
+    auto* tab1 = window->AddTab("Tab 1");
+    auto* tab2 = window->AddTab("Tab 2");
 
     // Add a label to the first tab
 

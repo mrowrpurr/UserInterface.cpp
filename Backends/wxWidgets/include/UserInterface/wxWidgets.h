@@ -13,19 +13,31 @@ namespace UserInterface::wxWidgets {
 
     namespace Impl {
         class wxWindowImpl : public wxFrame {
-            std::unique_ptr<wxNotebook>           _notebook;
-            std::vector<std::unique_ptr<wxPanel>> _notebookPanels;
+            std::unique_ptr<wxNotebook>              _notebook;
+            std::vector<std::unique_ptr<wxPanel>>    _notebookPagePanels;
+            std::vector<std::unique_ptr<wxBoxSizer>> _notebookPageSizers;
 
         public:
             wxWindowImpl(const wxString& title)
                 : wxFrame(NULL, wxID_ANY, title, wxDefaultPosition, wxSize(300, 200)) {}
 
-            void ConfigureForTabs() { _notebook = std::make_unique<wxNotebook>(this, wxID_ANY); }
+            void ConfigureForTabs() {
+                if (_notebook) return;
+                _notebook = std::make_unique<wxNotebook>(this, wxID_ANY);
+            }
 
-            std::unique_ptr<wxPanel>& AddTab(const char* tabName) {
-                _notebookPanels.emplace_back(std::make_unique<wxPanel>(_notebook.get(), wxID_ANY));
-                _notebook->AddPage(_notebookPanels.back().get(), tabName);
-                return _notebookPanels.back();
+            // std::unique_ptr<wxBoxSizer>& AddTab(const char* tabName) {
+            void AddTab(const char* tabName) {
+                ConfigureForTabs();
+                _notebookPagePanels.emplace_back(
+                    std::make_unique<wxPanel>(_notebook.get(), wxID_ANY)
+                );
+                auto sizer = std::make_unique<wxBoxSizer>(wxVERTICAL);
+                _notebookPagePanels.back()->SetSizer(sizer.get());
+                _notebookPageSizers.emplace_back(std::move(sizer));
+                _notebook->AddPage(_notebookPagePanels.back().get(), tabName);
+                // return _notebookPageSizers.back();
+                // return nullptr;
             }
         };
 
@@ -112,23 +124,19 @@ namespace UserInterface::wxWidgets {
 
     class Tab : public UITab, public WidgetContainer {
         std::string _title;
-        // std::unique_ptr<wxBoxSizer>&                               _sizer;
-        // std::unordered_map<std::string, std::unique_ptr<UIWidget>> _widgets;
-        // std::unique_ptr<WidgetContainer>                           _container;
 
     public:
-        // Tab(const char* title, std::unique_ptr<wxBoxSizer>& sizer) : _title(title),
-        // _sizer(sizer)
-        // {
-        //     _container = std::make_unique<WidgetContainer>(_sizer);
-        // }
-
-        Tab(const char* title, std::unique_ptr<wxBoxSizer>& sizer) : WidgetContainer(sizer) {
-            _title = title;
-        }
+        Tab(std::unique_ptr<wxBoxSizer> sizer) : WidgetContainer(sizer) {}
 
         const char* GetTitle() override { return _title.c_str(); }
         void        SetTitle(const char* title) override { _title = title; }
+        UILabel*    AddLabel(const char* text) override { return WidgetContainer::AddLabel(text); }
+        UITextbox*  AddTextbox(const char* text) override {
+            return WidgetContainer::AddTextbox(text);
+        }
+        UIButton* AddButton(const char* text, void (*callback)()) override {
+            return WidgetContainer::AddButton(text, callback);
+        }
     };
 
     class Window : public UIWindow, public WidgetContainer {
@@ -150,9 +158,10 @@ namespace UserInterface::wxWidgets {
             return true;
         }
 
-        UITab* AddTab(const char*) override {
-            // _impl->ConfigureForTabs();
-            // _tabs.emplace_back(std::make_unique<Tab>(title, _impl->AddTab(title)));
+        UITab* AddTab(const char* tabTitle) override {
+            // auto& tabSizer =
+            _impl->AddTab(tabTitle);
+            // _tabs.emplace_back(std::make_unique<Tab>(std::move(tabSizer)));
             // return _tabs.back().get();
             return nullptr;
         }
@@ -190,9 +199,10 @@ namespace UserInterface::wxWidgets {
             if (_windows.empty()) {
                 auto mainWindow = _impl->GetMainWindow();
                 mainWindow->SetTitle(title);
-                auto sizer = std::make_unique<wxBoxSizer>(wxVERTICAL);
-                mainWindow->SetSizer(sizer.get());
-                _windows.emplace_back(std::make_unique<Window>(mainWindow, std::move(sizer)));
+                // auto sizer = std::make_unique<wxBoxSizer>(wxVERTICAL);
+                // mainWindow->SetSizer(sizer.get());
+                // _windows.emplace_back(std::make_unique<Window>(mainWindow, std::move(sizer)));
+                _windows.emplace_back(std::make_unique<Window>(mainWindow, nullptr));
             } else {
                 auto windowImpl = std::make_shared<Impl::wxWindowImpl>(title);
                 auto sizer      = std::make_unique<wxBoxSizer>(wxVERTICAL);
