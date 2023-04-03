@@ -3,6 +3,12 @@
 #include <UserInterface/Interfaces.h>
 
 #include <QApplication>
+#include <QHBoxLayout>
+#include <QLabel>
+#include <QLineEdit>
+#include <QPushButton>
+#include <QTabWidget>
+#include <QVBoxLayout>
 #include <QWidget>
 #include <memory>
 #include <string>
@@ -14,56 +20,86 @@ namespace UserInterface::Qt {
     namespace Impl {}
 
     class Label : public UILabel {
-        // std::unique_ptr<wxStaticText> _label;
+        std::unique_ptr<QLabel> _label;
+        std::string             _text;
 
     public:
-        // Label(std::unique_ptr<wxStaticText> label) : _label(std::move(label)) {}
-        void        SetText(const char* text) {}
-        const char* GetText() { return nullptr; }
+        Label(const char* text) : _label(std::make_unique<QLabel>(text)), _text(text) {}
+        std::unique_ptr<QLabel>& GetLabelImpl() { return _label; }
+        void                     SetText(const char* text) { _label->setText(text); }
+        const char*              GetText() {
+            _text = _label->text().toStdString();
+            return _text.c_str();
+        }
     };
 
     class Textbox : public UITextbox {
-        // std::unique_ptr<wxTextCtrl> _textbox;
+        QLineEdit*  _textbox;
+        std::string _text;
 
     public:
-        // Textbox(std::unique_ptr<wxTextCtrl> textbox) : _textbox(std::move(textbox)) {}
-        void        SetText(const char* text) {}
-        const char* GetText() { return nullptr; }
+        Textbox(const char* text) : _textbox(new QLineEdit(text)) { _text = text; }
+        QLineEdit* GetTextboxImpl() { return _textbox; }
+        void       SetText(const char* text) {
+            _textbox->setText(text);
+            _textbox->setCursorPosition(0);
+        }
+        const char* GetText() {
+            _text = _textbox->text().toStdString();
+            return _text.c_str();
+        }
     };
 
     class Button : public UIButton {
-        // std::unique_ptr<wxButton> _button;
-        // void (*_callback)() = nullptr;
+        QPushButton* _button;
+        void (*_callback)() = nullptr;
 
     public:
-        // Button(std::unique_ptr<wxButton> button) : _button(std::move(button)) {}
-        // Button(std::unique_ptr<wxButton> button, void (*callback)())
-        // : _button(std::move(button)), _callback(callback) {
-        // _button->Bind(wxEVT_BUTTON, &Button::TriggerOnClick, this);
-        // }
-        void SetText(const char* text) {}
-        // void TriggerOnClick(wxCommandEvent&) { _callback(); }
+        Button(const char* text, void (*callback)()) : _button(new QPushButton(text)) {
+            _callback = callback;
+            QObject::connect(_button, &QPushButton::clicked, [=]() { _callback(); });
+        }
+        QPushButton* GetButtonImpl() { return _button; }
+        void         SetText(const char* text) { _button->setText(text); }
     };
 
     class WidgetContainer : public UIWidgetContainer {
+        std::unique_ptr<QVBoxLayout>&          _layout;
         std::vector<std::unique_ptr<UIWidget>> _widgets;
 
     public:
-        WidgetContainer() = default;
+        WidgetContainer(std::unique_ptr<QVBoxLayout>& layout) : _layout(layout) {}
+
         std::vector<std::unique_ptr<UIWidget>>& GetWidgets() { return _widgets; }
 
-        UILabel*   AddLabel(const char* text) override { return nullptr; }
-        UITextbox* AddTextbox(const char* text) override { return nullptr; }
-        UIButton*  AddButton(const char* text, void (*callback)()) override { return nullptr; }
+        UILabel* AddLabel(const char* text) override {
+            auto label = std::make_unique<Label>(text);
+            _layout->addWidget(label->GetLabelImpl().get());
+            _widgets.push_back(std::move(label));
+            return static_cast<UILabel*>(_widgets.back().get());
+        }
+        UITextbox* AddTextbox(const char* text) override {
+            auto textbox = std::make_unique<Textbox>(text);
+            _layout->addWidget(textbox->GetTextboxImpl());
+            _widgets.push_back(std::move(textbox));
+            return static_cast<UITextbox*>(_widgets.back().get());
+        }
+        UIButton* AddButton(const char* text, void (*callback)()) override {
+            auto button = std::make_unique<Button>(text, callback);
+            _layout->addWidget(button->GetButtonImpl());
+            _widgets.push_back(std::move(button));
+            return static_cast<UIButton*>(_widgets.back().get());
+        }
     };
 
     class Window;
 
     class Tab : public UITab, public WidgetContainer {
-        std::string _title;
+        std::string                  _title;
+        std::unique_ptr<QVBoxLayout> _layout;
 
     public:
-        Tab() : WidgetContainer() {}
+        Tab() : _layout(std::make_unique<QVBoxLayout>()), WidgetContainer(_layout) {}
 
         const char* GetTitle() override { return _title.c_str(); }
         void        SetTitle(const char* title) override { _title = title; }
@@ -79,8 +115,14 @@ namespace UserInterface::Qt {
     class Window : public UIWindow, public WidgetContainer {
         std::vector<std::unique_ptr<Tab>> _tabs;
         QWidget                           _impl;
+        std::unique_ptr<QVBoxLayout>      _layout;
 
     public:
+        Window()
+            : _impl(), _layout(std::make_unique<QVBoxLayout>(&_impl)), WidgetContainer(_layout) {
+            _impl.setLayout(_layout.get());
+        }
+
         bool Show() override {
             _impl.show();
             return true;
@@ -97,20 +139,12 @@ namespace UserInterface::Qt {
             // return _tabs.back().get();
             return nullptr;
         }
-        UILabel* AddLabel(const char* text) override {
-            // SetSizer(_impl->SetupMainSizer());
-            // return WidgetContainer::AddLabel(text);
-            return nullptr;
-        }
+        UILabel*   AddLabel(const char* text) override { return WidgetContainer::AddLabel(text); }
         UITextbox* AddTextbox(const char* text) override {
-            // SetSizer(_impl->SetupMainSizer());
-            // return WidgetContainer::AddTextbox(text);
-            return nullptr;
+            return WidgetContainer::AddTextbox(text);
         }
         UIButton* AddButton(const char* text, void (*callback)()) override {
-            // SetSizer(_impl->SetupMainSizer());
-            // return WidgetContainer::AddButton(text, callback);
-            return nullptr;
+            return WidgetContainer::AddButton(text, callback);
         }
     };
 
