@@ -17,8 +17,6 @@
 
 namespace UserInterface::Qt {
 
-    namespace Impl {}
-
     class Label : public UILabel {
         std::unique_ptr<QLabel> _label;
         std::string             _text;
@@ -97,9 +95,17 @@ namespace UserInterface::Qt {
     class Tab : public UITab, public WidgetContainer {
         std::string                  _title;
         std::unique_ptr<QVBoxLayout> _layout;
+        std::unique_ptr<QWidget>     _tabWidget;
 
     public:
-        Tab() : _layout(std::make_unique<QVBoxLayout>()), WidgetContainer(_layout) {}
+        Tab()
+            : WidgetContainer(_layout),
+              _layout(std::make_unique<QVBoxLayout>()),
+              _tabWidget(std::make_unique<QWidget>()) {
+            _tabWidget->setLayout(_layout.get());
+        }
+
+        std::unique_ptr<QWidget>& GetTabWidget() { return _tabWidget; }
 
         const char* GetTitle() override { return _title.c_str(); }
         void        SetTitle(const char* title) override { _title = title; }
@@ -116,10 +122,17 @@ namespace UserInterface::Qt {
         std::vector<std::unique_ptr<Tab>> _tabs;
         QWidget                           _impl;
         std::unique_ptr<QVBoxLayout>      _layout;
+        std::unique_ptr<QTabWidget>       _tabWidget;
+
+        void InitTabs() {
+            if (_tabWidget) return;
+            _tabWidget = std::make_unique<QTabWidget>(&_impl);
+            _layout->addWidget(_tabWidget.get());
+        }
 
     public:
         Window()
-            : _impl(), _layout(std::make_unique<QVBoxLayout>(&_impl)), WidgetContainer(_layout) {
+            : WidgetContainer(_layout), _impl(), _layout(std::make_unique<QVBoxLayout>(&_impl)) {
             _impl.setLayout(_layout.get());
         }
 
@@ -134,10 +147,10 @@ namespace UserInterface::Qt {
         }
 
         UITab* AddTab(const char* tabTitle) override {
-            // auto* wxBoxSizer = _impl->AddTab(tabTitle);
-            // _tabs.emplace_back(std::make_unique<Tab>(wxBoxSizer));
-            // return _tabs.back().get();
-            return nullptr;
+            InitTabs();
+            _tabs.emplace_back(std::make_unique<Tab>());
+            _tabWidget->addTab(_tabs.back()->GetTabWidget().get(), tabTitle);
+            return _tabs.back().get();
         }
         UILabel*   AddLabel(const char* text) override { return WidgetContainer::AddLabel(text); }
         UITextbox* AddTextbox(const char* text) override {

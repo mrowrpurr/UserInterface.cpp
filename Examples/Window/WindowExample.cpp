@@ -12,6 +12,7 @@ UI_Main {
     auto* ui     = UserInterface::GetAPI();
     auto* app    = ui->GetApplication();
     auto* window = app->NewWindow("");
+    window->Show();
     window->SetTitle("Hello from the Example Title");
 
     auto* tab1 = window->AddTab("Tab 1");
