@@ -4,17 +4,19 @@
 
 SetLogFilePath("C:/temp/UserInterfaceExample.log");
 
+UserInterface::UITextbox* textbox = nullptr;
+
 UI_Main {
     auto* ui     = UserInterface::GetAPI();
     auto* app    = ui->GetApplication();
     auto* window = app->NewWindow("");
     window->SetTitle("Hello from the Example Title");
 
-    // Add a label, textbox, and button to the window
     window->AddLabel("Hi, I am a label!");
-
-    // hmmm
-    window->AddTextbox("Butts.");
+    textbox = window->AddTextbox("Butts.");
+    window->AddButton("I am button! CLICK ME", []() {
+        textbox->SetText("The button was pressed!");
+    });
 
     // Make 2 tabs (UIWidgetsContainer)
     // auto* tab1 = window->AddTab("Tab 1");
