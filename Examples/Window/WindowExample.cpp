@@ -11,8 +11,10 @@ UserInterface::UITextbox* tab2_textbox = nullptr;
 UI_Main {
     auto* ui     = UserInterface::GetAPI();
     auto* app    = ui->GetApplication();
-    auto* window = app->NewWindow("");
-    window->SetTitle("????");
+    auto* window = app->NewWindow("GUI Window");
+
+    // window->Show();
+    // window->SetTitle("Hello, world!");
 
     // auto* tab1 = window->AddTab("Tab 1");
     // auto* tab2 = window->AddTab("Tab 2");
@@ -27,8 +29,8 @@ UI_Main {
     //     tab2_textbox->SetText("The BUTTS was pressed!");
     // });
 
-    window->AddLabel("Hi, I am a label!");
-    window->Show();
+    // window->AddLabel("Hi, I am a label!");
+    // window->Show();
     // textbox = window->AddTextbox("Butts.");
     // window->AddButton("I am button! CLICK ME", []() {
     //     textbox->SetText("The button was pressed!");

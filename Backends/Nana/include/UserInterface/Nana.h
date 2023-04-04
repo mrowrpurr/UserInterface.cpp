@@ -20,28 +20,18 @@ namespace UserInterface::Nana {
     namespace Impl {}
 
     class Label : public UILabel {
-        std::shared_ptr<nana::label> _label;
-
     public:
-        Label(std::shared_ptr<nana::label> label) : _label(std::move(label)) {}
-        std::shared_ptr<nana::label>& GetNanaWidget() { return _label; }
-        void                          SetText(const char* text) { _label->caption(text); }
-        const char*                   GetText() { return nullptr; }
+        void        SetText(const char* text) {}
+        const char* GetText() { return nullptr; }
     };
 
     class Textbox : public UITextbox {
-        // std::unique_ptr<wxTextCtrl> _textbox;
-
     public:
-        // Textbox(std::unique_ptr<wxTextCtrl> textbox) : _textbox(std::move(textbox)) {}
         void        SetText(const char* text) {}
         const char* GetText() { return nullptr; }
     };
 
     class Button : public UIButton {
-        // std::unique_ptr<wxButton> _button;
-        // void (*_callback)() = nullptr;
-
     public:
         void SetText(const char* text) {}
     };
@@ -76,49 +66,26 @@ namespace UserInterface::Nana {
 
     class Window : public UIWindow, public WidgetContainer {
         std::vector<std::unique_ptr<Tab>> _tabs;
-        nana::form                        _nanaForm{};
-        nana::panel<true>                 _nanaPanel{_nanaForm};
-        nana::tabbar<std::string>         _tabbar{_nanaForm};
-        std::vector<nana::panel<true>>    _tabPanels;
+        std::unique_ptr<nana::form>       _nanaForm{};
 
     public:
+        Window() { _nanaForm = std::make_unique<nana::form>(); }
+
+        std::unique_ptr<nana::form>& GetNanaForm() { return _nanaForm; }
+
         bool Show() override {
-            _nanaForm.show();
+            _nanaForm->show();
             return true;
         }
 
         bool SetTitle(const char* title) override {
-            _nanaForm.caption(title);
+            _nanaForm->caption(title);
             return true;
         }
 
-        UITab* AddTab(const char* tabTitle) override {
-            //
-            //
-            //
-            return nullptr;
-        }
+        UITab* AddTab(const char* tabTitle) override { return nullptr; }
 
-        std::shared_ptr<nana::panel<true>> panel;
-        std::shared_ptr<nana::place>       place;
-        std::shared_ptr<nana::label>       label;
-
-        UILabel* AddLabel(const char* text) override {
-            panel.reset(new nana::panel<true>{_nanaForm});
-            place.reset(new nana::place{*panel});
-            label.reset(new nana::label{*panel, "Hmmmmm"});
-
-            place->div("vert <label>");
-            place->field("label") << *label;
-            place->collocate();
-
-            // auto label = std::make_unique<Label>(std::make_shared<nana::label>(_nanaForm, text));
-            // _widgets.push_back(std::move(label));
-            // return static_cast<UILabel*>(_widgets.back().get());
-            return nullptr;
-
-            // return WidgetContainer::AddLabel(text);
-        }
+        UILabel*   AddLabel(const char* text) override { return nullptr; }
         UITextbox* AddTextbox(const char* text) override {
             return WidgetContainer::AddTextbox(text);
         }
@@ -131,11 +98,33 @@ namespace UserInterface::Nana {
         std::vector<std::unique_ptr<Window>> _windows;
 
     public:
-        void Run() override { nana::exec(); }
+        void Run() override {
+            // auto  window = std::make_unique<Window>();
+            // auto& fm     = *window->GetNanaForm();
+            // _windows.push_back(std::move(window));
+
+            // fm
+
+            // nana::place   plc{fm};
+            // nana::label   lb{fm, "CHANGED!"};
+            // nana::textbox tb{fm, "Hello, World!"};
+            // nana::slider  sl{fm};
+            // plc.div("<vert stuff>");
+            // plc["stuff"] << lb << tb << sl;
+            // plc.collocate();
+            // fm.show();
+            nana::exec();
+        }
 
         UIWindow* NewWindow(const char* title) override {
             auto window = std::make_unique<Window>();
             window->SetTitle(title);
+
+            if (_windows.empty()) {
+                window->GetNanaForm()->events().unload([]() { nana::API::exit_all(); });
+                window->Show();
+            }
+
             _windows.push_back(std::move(window));
             return _windows.back().get();
         }
