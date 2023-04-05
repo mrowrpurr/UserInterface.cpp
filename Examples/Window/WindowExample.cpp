@@ -29,7 +29,7 @@ UI_Main {
     //     tab2_textbox->SetText("The BUTTS was pressed!");
     // });
 
-    // window->AddLabel("Hi, I am a label!");
+    window->AddLabel("Hi, I am a label!");
     // window->Show();
     // textbox = window->AddTextbox("Butts.");
     // window->AddButton("I am button! CLICK ME", []() {
