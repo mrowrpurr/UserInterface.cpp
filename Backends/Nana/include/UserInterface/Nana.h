@@ -21,28 +21,25 @@ namespace UserInterface::Nana {
     namespace Impl {}
 
     class Label : public UILabel {
-        std::unique_ptr<nana::label> _nanaLabel;
-        // nana::label* _nanaLabel;
+        nana::label _nanaLabel;
 
     public:
-        Label(std::unique_ptr<nana::panel<true>>& nanaPanel) {}
-        // : _nanaLabel(new nana::label(*nanaPanel)) {}
-        // Label(std::unique_ptr<nana::panel<true>>& nanaPanel) {}
-        // : _nanaLabel(std::make_unique<nana::label>(*nanaPanel)) {}
-        // std::unique_ptr<nana::label>& GetNanaLabel() { return _nanaLabel; }
-        // void SetText(const char* text) { _nanaLabel.caption(text); }
-        void        SetText(const char* text) { _nanaLabel->caption(text); }
-        const char* GetText() { return nullptr; }
+        Label(nana::panel<true>* nanaPanel) : _nanaLabel(*nanaPanel) {}
+
+        nana::label* GetNanaLabel() { return &_nanaLabel; }
+        void         SetText(const char* text) { _nanaLabel.caption(text); }
+        const char*  GetText() { return nullptr; }
     };
 
     class Textbox : public UITextbox {
         nana::textbox _nanaTextbox;
 
     public:
-        Textbox(std::unique_ptr<nana::panel<true>>& nanaPanel) : _nanaTextbox(*nanaPanel) {}
+        Textbox(nana::panel<true>* nanaPanel) : _nanaTextbox(*nanaPanel) {}
 
-        void        SetText(const char* text) { _nanaTextbox.caption(text); }
-        const char* GetText() { return nullptr; }
+        nana::textbox* GetNanaTextbox() { return &_nanaTextbox; }
+        void           SetText(const char* text) { _nanaTextbox.caption(text); }
+        const char*    GetText() { return nullptr; }
     };
 
     class Button : public UIButton {
@@ -55,41 +52,36 @@ namespace UserInterface::Nana {
     };
 
     class WidgetContainer : public UIWidgetContainer {
+        std::string                                             _fieldsPlaceString = "fields";
         std::unique_ptr<std::vector<std::unique_ptr<UIWidget>>> _widgets;
-        nana::form*                                             _nanaForm;
         nana::panel<true>*                                      _nanaPanel;
         nana::place*                                            _nanaPanelPlace;
 
-    protected:
-        void ConfigureContainer(
-            nana::form* nanaForm, nana::panel<true>* nanaPanel, nana::place* nanaPanelPlace
-        ) {
-            _nanaForm  = nanaForm;
-            _nanaPanel = nanaPanel;
-            _nanaPanelPlace->bind(*_nanaPanel);
-            _nanaPanelPlace->div("vert <fields>");
-        }
-
     public:
-        WidgetContainer() : _widgets(std::make_unique<std::vector<std::unique_ptr<UIWidget>>>()) {}
+        WidgetContainer(
+            const std::string& fieldsPlaceString, nana::panel<true>* nanaPanel,
+            nana::place* nanaPanelPlace
+        )
+            : _fieldsPlaceString(fieldsPlaceString),
+              _widgets(std::make_unique<std::vector<std::unique_ptr<UIWidget>>>()),
+              _nanaPanel(nanaPanel),
+              _nanaPanelPlace(nanaPanelPlace) {}
 
         UILabel* AddLabel(const char* text) override {
-            // auto* label = new Label(_nanaPanel);
-            // // label->SetText(text);
-            // // _nanaPanelPlace->field("fields") << *label->GetNanaLabel();
-            // // _nanaPanelPlace->collocate();
-            // _widgets->push_back(std::unique_ptr<UIWidget>(label));
-            // return label;
-            return nullptr;
+            auto* label = new Label(_nanaPanel);
+            label->SetText(text);
+            _nanaPanelPlace->field(_fieldsPlaceString.c_str()) << *label->GetNanaLabel();
+            _nanaPanelPlace->collocate();
+            _widgets->push_back(std::unique_ptr<UIWidget>(label));
+            return label;
         }
         UITextbox* AddTextbox(const char* text) override {
-            // auto* textbox = new Textbox(_nanaPanel);
-            // textbox->SetText(text);
-            // _widgets.push_back(std::unique_ptr<UIWidget>(textbox));
-            // // TODO
-            // _nanaPanelPlace->collocate();
-            // return textbox;
-            return nullptr;
+            auto* textbox = new Textbox(_nanaPanel);
+            textbox->SetText(text);
+            _nanaPanelPlace->field(_fieldsPlaceString.c_str()) << *textbox->GetNanaTextbox();
+            _nanaPanelPlace->collocate();
+            _widgets->push_back(std::unique_ptr<UIWidget>(textbox));
+            return textbox;
         }
         UIButton* AddButton(const char* text, void (*callback)()) override {
             // auto* button = new Button(_nanaPanel);
@@ -108,7 +100,7 @@ namespace UserInterface::Nana {
         std::string _title;
 
     public:
-        Tab(nana::form* nanaForm) : WidgetContainer() {}
+        Tab() : WidgetContainer("fields", nullptr, nullptr) {}
 
         const char* GetTitle() override {
             // Nothing setup to give access here... let's fix this later!
@@ -118,7 +110,11 @@ namespace UserInterface::Nana {
             // TODO make SetTitle return a bool, cause you can't do it with Nana... well, not easily
             // at least.
         }
-        UILabel*   AddLabel(const char* text) override { return WidgetContainer::AddLabel(text); }
+        UILabel* AddLabel(const char* text) override {
+            auto* label = WidgetContainer::AddLabel(text);
+            //
+            return label;
+        }
         UITextbox* AddTextbox(const char* text) override {
             return WidgetContainer::AddTextbox(text);
         }
@@ -130,9 +126,17 @@ namespace UserInterface::Nana {
     class Window : public WidgetContainer, public UIWindow {
         std::vector<std::unique_ptr<Tab>> _tabs;
         nana::form                        _nanaForm{};
+        nana::place                       _nanaMainPlace{_nanaForm};
+        nana::panel<true>                 _nanaWindowWidgetsPanel{_nanaForm};
+        nana::place                       _nanaWindowWidgetsPlace{_nanaWindowWidgetsPanel};
 
     public:
-        Window() {}
+        Window() : WidgetContainer("fields", &_nanaWindowWidgetsPanel, &_nanaWindowWidgetsPlace) {
+            _nanaMainPlace.div("vert <mainWidgetsPanel>");
+            _nanaMainPlace.field("mainWidgetsPanel") << _nanaWindowWidgetsPanel;
+            _nanaMainPlace.collocate();
+            _nanaWindowWidgetsPlace.div("vert <vert fields max=50 gap=5>");
+        }
 
         nana::form* GetNanaForm() { return &_nanaForm; }
 
@@ -146,17 +150,19 @@ namespace UserInterface::Nana {
         UITab* AddTab(const char* tabTitle) override { return nullptr; }
 
         UILabel* AddLabel(const char* text) override {
-            // return WidgetContainer::AddLabel(text);
-            return nullptr;
+            auto* label = WidgetContainer::AddLabel(text);
+            _nanaWindowWidgetsPlace.collocate();
+            return label;
         }
         UITextbox* AddTextbox(const char* text) override {
-            // return WidgetContainer::AddTextbox(text);
-            return nullptr;
+            auto* textbox = WidgetContainer::AddTextbox(text);
+            _nanaWindowWidgetsPlace.collocate();
+            return textbox;
         }
         UIButton* AddButton(const char* text, void (*callback)()) override {
-            // return WidgetContainer::AddButton(text, callback);
-            // _nanaFormMainPlace->collocate();
-            return nullptr;
+            auto* button = WidgetContainer::AddButton(text, callback);
+            _nanaWindowWidgetsPlace.collocate();
+            return button;
         }
     };
 
@@ -173,12 +179,6 @@ namespace UserInterface::Nana {
         UIWindow* NewWindow(const char* title) override {
             auto window = std::make_unique<Window>();
             window->SetTitle(title);
-
-            if (_windows.empty()) {
-                window->GetNanaForm()->events().unload([]() {});
-                window->Show();
-            }
-
             _windows.push_back(std::move(window));
             return _windows.back().get();
         }

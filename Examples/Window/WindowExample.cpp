@@ -30,11 +30,11 @@ UI_Main {
     // });
 
     window->AddLabel("Hi, I am a label!");
-    // window->Show();
-    // textbox = window->AddTextbox("Butts.");
+    textbox = window->AddTextbox("Butts.");
     // window->AddButton("I am button! CLICK ME", []() {
     //     textbox->SetText("The button was pressed!");
     // });
 
+    window->Show();
     app->Run();
 }
