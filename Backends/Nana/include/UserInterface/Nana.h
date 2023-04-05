@@ -46,9 +46,12 @@ namespace UserInterface::Nana {
         nana::button _nanaButton;
 
     public:
-        Button(std::unique_ptr<nana::panel<true>>& nanaPanel) : _nanaButton(*nanaPanel) {}
+        Button(nana::panel<true>* nanaPanel, void (*callback)()) : _nanaButton(*nanaPanel) {
+            _nanaButton.events().click([callback]() { callback(); });
+        }
 
-        void SetText(const char* text) { _nanaButton.caption(text); }
+        nana::button* GetNanaButton() { return &_nanaButton; }
+        void          SetText(const char* text) { _nanaButton.caption(text); }
     };
 
     class WidgetContainer : public UIWidgetContainer {
@@ -84,13 +87,12 @@ namespace UserInterface::Nana {
             return textbox;
         }
         UIButton* AddButton(const char* text, void (*callback)()) override {
-            // auto* button = new Button(_nanaPanel);
-            // button->SetText(text);
-            // _widgets.push_back(std::unique_ptr<UIWidget>(button));
-            // // TODO
-            // _nanaPanelPlace->collocate();
-            // return button;
-            return nullptr;
+            auto* button = new Button(_nanaPanel, callback);
+            button->SetText(text);
+            _nanaPanelPlace->field(_fieldsPlaceString.c_str()) << *button->GetNanaButton();
+            _nanaPanelPlace->collocate();
+            _widgets->push_back(std::unique_ptr<UIWidget>(button));
+            return button;
         }
     };
 
@@ -135,7 +137,7 @@ namespace UserInterface::Nana {
             _nanaMainPlace.div("vert <mainWidgetsPanel>");
             _nanaMainPlace.field("mainWidgetsPanel") << _nanaWindowWidgetsPanel;
             _nanaMainPlace.collocate();
-            _nanaWindowWidgetsPlace.div("vert <vert fields max=50 gap=5>");
+            _nanaWindowWidgetsPlace.div("vert <vert fields gap=5 arrange=[25,repeated]>");
         }
 
         nana::form* GetNanaForm() { return &_nanaForm; }
