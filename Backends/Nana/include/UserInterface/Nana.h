@@ -151,7 +151,7 @@ namespace UserInterface::Nana {
 
         void InitializeTabs() {
             if (_tabsInitialized) return;
-            _nanaMainPlace.div("vert <tabBar weight=30><tabPanels>");
+            _nanaMainPlace.div("vert <tabBar weight=30><tabPanels><mainWidgetsPanel>");
             _nanaMainPlace.field("tabBar") << _nanaTabBar;
             _nanaMainPlace.collocate();
             _tabsInitialized = true;
