@@ -1,8 +1,4 @@
-#include <Logging/Logging.h>
 #include <UserInterface.h>
-#include <UserInterface/Autodetect.h>
-
-SetLogFilePath("C:/temp/UserInterfaceExample.log");
 
 UserInterface::UITextbox* textbox      = nullptr;
 UserInterface::UITextbox* tab1_textbox = nullptr;

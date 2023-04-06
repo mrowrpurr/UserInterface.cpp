@@ -5,21 +5,18 @@ function(example ExampleName)
     set_target_properties(${target_name} PROPERTIES WIN32_EXECUTABLE TRUE)
 
     # User Interface core library
-    target_link_libraries(${target_name} PRIVATE UserInterface)
-
-    # Logging
-    target_link_libraries(${target_name} PRIVATE Logging)
+    target_link_libraries(${target_name} PRIVATE userinterface)
 
     if(nana IN_LIST VCPKG_MANIFEST_FEATURES)
-        target_link_libraries(${target_name} PRIVATE UserInterface.Nana)
+        target_link_libraries(${target_name} PRIVATE userinterface-nana)
     endif()
 
     if(fltk IN_LIST VCPKG_MANIFEST_FEATURES)
-        target_link_libraries(${target_name} PRIVATE UserInterface.FLTK)
+        target_link_libraries(${target_name} PRIVATE userinterface-fltk)
     endif()
 
     if(wxwidgets IN_LIST VCPKG_MANIFEST_FEATURES)
-        target_link_libraries(${target_name} PRIVATE UserInterface.wxWidgets)
+        target_link_libraries(${target_name} PRIVATE userinterface-wxwidgets)
     endif()
 
     if(imgui-glfw3-opengl IN_LIST VCPKG_MANIFEST_FEATURES)
@@ -42,7 +39,7 @@ function(example ExampleName)
         target_link_libraries(${target_name} PRIVATE Qt6::Core Qt6::Widgets)
 
         #
-        target_link_libraries(${target_name} PRIVATE UserInterface.Qt)
+        target_link_libraries(${target_name} PRIVATE userinterface-qt)
     endif()
 
     if(gtkmm IN_LIST VCPKG_MANIFEST_FEATURES)
@@ -60,6 +57,4 @@ function(example ExampleName)
     endif()
 endfunction()
 
-add_subdirectory(Window)
-
-# add_subdirectory(Button)
+add_subdirectory(Basic)
