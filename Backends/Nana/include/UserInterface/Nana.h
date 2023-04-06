@@ -55,7 +55,7 @@ namespace UserInterface::Nana {
     };
 
     class WidgetContainer : public UIWidgetContainer {
-        std::string                                             _fieldsPlaceString = "fields";
+        std::string                                             _fieldsPlaceString;
         std::unique_ptr<std::vector<std::unique_ptr<UIWidget>>> _widgets;
         nana::panel<true>*                                      _nanaPanel;
         nana::place*                                            _nanaPanelPlace;
@@ -99,42 +99,76 @@ namespace UserInterface::Nana {
     class Window;
 
     class Tab : public WidgetContainer, public UITab {
-        std::string _title;
+        std::string       _title;
+        nana::panel<true> _nanaPanel;
+        nana::place       _nanaPlace;
+        nana::place*      _windowPlace;
 
     public:
-        Tab() : WidgetContainer("fields", nullptr, nullptr) {}
+        Tab(nana::form* nanaForm, nana::place* windowPlace, const char* title)
+            : WidgetContainer("fields", &_nanaPanel, &_nanaPlace),
+              _title(title),
+              _nanaPanel(*nanaForm),
+              _nanaPlace(_nanaPanel),
+              _windowPlace(windowPlace) {
+            _nanaPlace.div("vert <vert fields gap=5 arrange=[25,repeated]>");
+        }
 
-        const char* GetTitle() override {
-            // Nothing setup to give access here... let's fix this later!
-            return nullptr;
-        }
-        void SetTitle(const char* title) override {
-            // TODO make SetTitle return a bool, cause you can't do it with Nana... well, not easily
-            // at least.
-        }
-        UILabel* AddLabel(const char* text) override {
+        nana::panel<true>* GetNanaPanel() { return &_nanaPanel; }
+        void               Show() { _nanaPanel.show(); }
+        void               Hide() { _nanaPanel.hide(); }
+
+        const char* GetTitle() override { return _title.c_str(); }
+        void        SetTitle(const char*) override {}
+        UILabel*    AddLabel(const char* text) override {
             auto* label = WidgetContainer::AddLabel(text);
-            //
+            _nanaPlace.collocate();
+            _windowPlace->collocate();
             return label;
         }
         UITextbox* AddTextbox(const char* text) override {
-            return WidgetContainer::AddTextbox(text);
+            auto* textbox = WidgetContainer::AddTextbox(text);
+            _nanaPlace.collocate();
+            _windowPlace->collocate();
+            return textbox;
         }
         UIButton* AddButton(const char* text, void (*callback)()) override {
-            return WidgetContainer::AddButton(text, callback);
+            auto* button = WidgetContainer::AddButton(text, callback);
+            _nanaPlace.collocate();
+            _windowPlace->collocate();
+            return button;
         }
     };
 
     class Window : public WidgetContainer, public UIWindow {
+        bool                              _tabsInitialized = false;
         std::vector<std::unique_ptr<Tab>> _tabs;
         nana::form                        _nanaForm{};
         nana::place                       _nanaMainPlace{_nanaForm};
         nana::panel<true>                 _nanaWindowWidgetsPanel{_nanaForm};
         nana::place                       _nanaWindowWidgetsPlace{_nanaWindowWidgetsPanel};
+        nana::tabbar<std::string>         _nanaTabBar{_nanaForm};
+
+        void InitializeTabs() {
+            if (_tabsInitialized) return;
+            _nanaMainPlace.div("vert <tabBar weight=30><tabPanels>");
+            _nanaMainPlace.field("tabBar") << _nanaTabBar;
+            _nanaMainPlace.collocate();
+            _tabsInitialized = true;
+            _nanaTabBar.events().activated([&](const nana::arg_tabbar<std::string>& tabbar) {
+                for (auto i = 0; i < _tabs.size(); i++) {
+                    if (tabbar.item_pos == i) {
+                        _tabs[i]->Show();
+                    } else {
+                        _tabs[i]->Hide();
+                    }
+                }
+            });
+        }
 
     public:
         Window() : WidgetContainer("fields", &_nanaWindowWidgetsPanel, &_nanaWindowWidgetsPlace) {
-            _nanaMainPlace.div("vert <mainWidgetsPanel>");
+            _nanaMainPlace.div("vert <mainWidgetsPanel margin=5>");
             _nanaMainPlace.field("mainWidgetsPanel") << _nanaWindowWidgetsPanel;
             _nanaMainPlace.collocate();
             _nanaWindowWidgetsPlace.div("vert <vert fields gap=5 arrange=[25,repeated]>");
@@ -147,9 +181,20 @@ namespace UserInterface::Nana {
             return true;
         }
 
-        bool SetTitle(const char* title) override { return true; }
+        bool SetTitle(const char* title) override {
+            _nanaForm.caption(title);
+            return true;
+        }
 
-        UITab* AddTab(const char* tabTitle) override { return nullptr; }
+        UITab* AddTab(const char* tabTitle) override {
+            InitializeTabs();
+            auto tab = std::make_unique<Tab>(&_nanaForm, &_nanaMainPlace, tabTitle);
+            tab->SetTitle(tabTitle);
+            _nanaTabBar.push_back(tabTitle);
+            _nanaMainPlace.field("tabPanels").fasten(*tab->GetNanaPanel());
+            _tabs.push_back(std::move(tab));
+            return _tabs.back().get();
+        }
 
         UILabel* AddLabel(const char* text) override {
             auto* label = WidgetContainer::AddLabel(text);
