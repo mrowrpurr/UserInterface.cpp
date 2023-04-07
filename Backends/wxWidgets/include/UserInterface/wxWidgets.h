@@ -4,6 +4,8 @@
 #include <wx/notebook.h>
 #include <wx/wx.h>
 
+#include <atomic>
+#include <functional>
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -13,216 +15,153 @@ namespace UserInterface::wxWidgets {
 
     namespace Impl {
         class wxWindowImpl : public wxFrame {
-            bool                     _notebookConfigured = false;
-            wxNotebook*              _notebook           = nullptr;
-            std::vector<wxPanel*>    _notebookPagePanels;
-            std::vector<wxBoxSizer*> _notebookPageSizers;
-
-            bool        _mainSizerConfigured = false;
-            wxBoxSizer* _mainSizer           = nullptr;
+            std::function<void()> _onCloseCallback;
 
         public:
-            wxWindowImpl(const wxString& title)
-                : wxFrame(NULL, wxID_ANY, title, wxDefaultPosition, wxSize(300, 200)) {}
-
-            void ConfigureForTabs() {
-                if (_notebookConfigured) return;
-                _notebook           = new wxNotebook(this, wxID_ANY);
-                _notebookConfigured = true;
+            wxWindowImpl(const wxString& title, std::function<void()> onCloseCallback)
+                : wxFrame(NULL, wxID_ANY, title, wxDefaultPosition, wxSize(300, 200)),
+                  _onCloseCallback(onCloseCallback) {
+                Bind(wxEVT_CLOSE_WINDOW, &wxWindowImpl::OnClose, this);
             }
 
-            wxBoxSizer* AddTab(const char* tabName) {
-                ConfigureForTabs();
-                auto* panel = new wxPanel(_notebook, wxID_ANY);
-                auto* sizer = new wxBoxSizer(wxVERTICAL);
-
-                panel->SetSizer(sizer);
-                _notebook->AddPage(panel, tabName);
-                return sizer;
-            }
-
-            wxBoxSizer* SetupMainSizer() {
-                if (_notebookConfigured) return nullptr;
-                if (_mainSizerConfigured) return _mainSizer;
-                _mainSizer = new wxBoxSizer(wxVERTICAL);
-                SetSizer(_mainSizer);
-                _mainSizerConfigured = true;
-                return _mainSizer;
+            void OnClose(wxCloseEvent& event) {
+                event.Veto();
+                _onCloseCallback();
             }
         };
 
         class wxApplicationImpl : public wxApp {
-            std::shared_ptr<wxWindowImpl> _mainWindow;
+            std::function<void()> _onInitCallback;
 
         public:
-            wxApplicationImpl() : _mainWindow(new wxWindowImpl("")) {}
+            wxApplicationImpl(std::function<void()> onInitCallback)
+                : _onInitCallback(onInitCallback) {}
 
             virtual bool OnInit() {
-                _mainWindow->Show(true);
+                _onInitCallback();
                 return true;
             }
-
-            std::shared_ptr<wxWindowImpl> GetMainWindow() { return _mainWindow; }
         };
     }
 
     class Label : public UILabel {
-        std::unique_ptr<wxStaticText> _label;
-
     public:
-        Label(std::unique_ptr<wxStaticText> label) : _label(std::move(label)) {}
-        void        SetText(const char* text) { _label->SetLabelText(text); }
-        const char* GetText() { return _label->GetLabelText().c_str(); }
+        void        SetText(const char* text) {}
+        const char* GetText() { return nullptr; }
     };
 
     class Textbox : public UITextbox {
-        std::unique_ptr<wxTextCtrl> _textbox;
-
     public:
-        Textbox(std::unique_ptr<wxTextCtrl> textbox) : _textbox(std::move(textbox)) {}
-        void        SetText(const char* text) { _textbox->SetValue(text); }
-        const char* GetText() { return _textbox->GetValue().c_str(); }
+        void        SetText(const char* text) {}
+        const char* GetText() { return nullptr; }
     };
 
     class Button : public UIButton {
-        std::unique_ptr<wxButton> _button;
-        void (*_callback)() = nullptr;
-
     public:
-        Button(std::unique_ptr<wxButton> button) : _button(std::move(button)) {}
-        Button(std::unique_ptr<wxButton> button, void (*callback)())
-            : _button(std::move(button)), _callback(callback) {
-            _button->Bind(wxEVT_BUTTON, &Button::TriggerOnClick, this);
-        }
-        void SetText(const char* text) { _button->SetLabelText(text); }
-        void TriggerOnClick(wxCommandEvent&) { _callback(); }
+        void SetText(const char* text) {}
     };
 
     class WidgetContainer : public UIWidgetContainer {
-        wxBoxSizer*                            _sizer = nullptr;
-        std::vector<std::unique_ptr<UIWidget>> _widgets;
-
     public:
-        WidgetContainer() = default;
-        WidgetContainer(wxBoxSizer* sizer) : _sizer(sizer) {}
-
-        wxBoxSizer*                             GetSizer() { return _sizer; }
-        void                                    SetSizer(wxBoxSizer* sizer) { _sizer = sizer; }
-        std::vector<std::unique_ptr<UIWidget>>& GetWidgets() { return _widgets; }
-
-        UILabel* AddLabel(const char* text) override {
-            if (!_sizer) return nullptr;
-            auto labelImpl =
-                std::make_unique<wxStaticText>(_sizer->GetContainingWindow(), wxID_ANY, text);
-            _sizer->Add(labelImpl.get(), 0, wxEXPAND | wxALL, 5);
-            _widgets.emplace_back(std::make_unique<Label>(std::move(labelImpl)));
-            return static_cast<UILabel*>(_widgets.back().get());
-        }
-
-        UITextbox* AddTextbox(const char* text) override {
-            if (!_sizer) return nullptr;
-            auto textbox = std::make_unique<wxTextCtrl>(_sizer->GetContainingWindow(), wxID_ANY);
-            _sizer->Add(textbox.get(), 0, wxEXPAND | wxALL, 5);
-            _widgets.emplace_back(std::make_unique<Textbox>(std::move(textbox)));
-            return static_cast<UITextbox*>(_widgets.back().get());
-        }
-
-        UIButton* AddButton(const char* text, void (*callback)()) override {
-            if (!_sizer) return nullptr;
-            auto button = std::make_unique<wxButton>(_sizer->GetContainingWindow(), wxID_ANY, text);
-            _sizer->Add(button.get(), 0, wxEXPAND | wxALL, 5);
-            _widgets.emplace_back(std::make_unique<Button>(std::move(button), callback));
-            return static_cast<UIButton*>(_widgets.back().get());
-        }
+        UILabel*   AddLabel(const char* text) override { return nullptr; }
+        UITextbox* AddTextbox(const char* text) override { return nullptr; }
+        UIButton*  AddButton(const char* text, void (*callback)()) override { return nullptr; }
     };
 
     class Window;
 
-    class Tab : public UITab, public WidgetContainer {
+    class Tab : public WidgetContainer, public UITab {
         std::string _title;
 
     public:
-        Tab(wxBoxSizer* sizer) : WidgetContainer(sizer) {}
-
         const char* GetTitle() override { return _title.c_str(); }
-        void        SetTitle(const char* title) override { _title = title; }
-        UILabel*    AddLabel(const char* text) override { return WidgetContainer::AddLabel(text); }
-        UITextbox*  AddTextbox(const char* text) override {
-            return WidgetContainer::AddTextbox(text);
-        }
-        UIButton* AddButton(const char* text, void (*callback)()) override {
-            return WidgetContainer::AddButton(text, callback);
-        }
+        void        SetTitle(const char*) override {}
+        UILabel*    AddLabel(const char* text) override { return nullptr; }
+        UITextbox*  AddTextbox(const char* text) override { return nullptr; }
+        UIButton*   AddButton(const char* text, void (*callback)()) override { return nullptr; }
     };
 
-    class Window : public UIWindow, public WidgetContainer {
-        std::shared_ptr<Impl::wxWindowImpl> _impl;
+    namespace {
+        std::atomic<unsigned int> _nextWindowId = 0;
+    }
+
+    class Window : public WidgetContainer, public UIWindow {
+        unsigned int _id = _nextWindowId++;
+
+        bool                               _appInitialized = false;
+        std::vector<std::function<void()>> _onInitCallbacks;
+
+        std::function<void()> _onCloseCallback;
+
+        bool                                _tabsInitialized = false;
         std::vector<std::unique_ptr<Tab>>   _tabs;
-        wxBoxSizer*                         _sizer;
+        std::unique_ptr<Impl::wxWindowImpl> _wxWindow;
+
+        void PerformOnInitOrNow(std::function<void()> callback) {
+            if (_appInitialized) callback();
+            else _onInitCallbacks.push_back(callback);
+        }
 
     public:
-        Window(std::shared_ptr<Impl::wxWindowImpl> impl) : _impl(impl) {}
+        Window(const std::string& title, std::function<void()> onCloseCallback)
+            : _wxWindow(std::make_unique<Impl::wxWindowImpl>(title, onCloseCallback)) {}
+
+        unsigned int                         GetId() const { return _id; }
+        std::unique_ptr<Impl::wxWindowImpl>& GetWxWindow() { return _wxWindow; }
+
+        void OnInit() {
+            _appInitialized = true;
+            for (auto& callback : _onInitCallbacks) callback();
+            _onInitCallbacks.clear();
+        }
 
         bool Show() override {
-            _impl->Show(true);
+            PerformOnInitOrNow([this]() { _wxWindow->Show(true); });
             return true;
         }
 
         bool SetTitle(const char* title) override {
-            _impl->SetTitle(title);
+            PerformOnInitOrNow([this, title]() { _wxWindow->SetTitle(title); });
             return true;
         }
 
-        UITab* AddTab(const char* tabTitle) override {
-            auto* wxBoxSizer = _impl->AddTab(tabTitle);
-            _tabs.emplace_back(std::make_unique<Tab>(wxBoxSizer));
-            return _tabs.back().get();
-        }
+        UITab* AddTab(const char* tabTitle) override { return nullptr; }
 
-        UILabel* AddLabel(const char* text) override {
-            SetSizer(_impl->SetupMainSizer());
-            return WidgetContainer::AddLabel(text);
-        }
-        UITextbox* AddTextbox(const char* text) override {
-            SetSizer(_impl->SetupMainSizer());
-            return WidgetContainer::AddTextbox(text);
-        }
-        UIButton* AddButton(const char* text, void (*callback)()) override {
-            SetSizer(_impl->SetupMainSizer());
-            return WidgetContainer::AddButton(text, callback);
-        }
+        UILabel*   AddLabel(const char* text) override { return nullptr; }
+        UITextbox* AddTextbox(const char* text) override { return nullptr; }
+        UIButton*  AddButton(const char* text, void (*callback)()) override { return nullptr; }
     };
 
     class Application : public UIApplication {
-        Impl::wxApplicationImpl*             _impl;  // wxWidgets responsible for the destruction
-        std::vector<std::unique_ptr<Window>> _windows;
+        std::unordered_map<unsigned int, std::unique_ptr<Window>> _windows;
+        Impl::wxApplicationImpl*                                  _wxApplication;
 
     public:
-        Application() : _impl(new Impl::wxApplicationImpl()) {}
+        Application()
+            : _wxApplication(new Impl::wxApplicationImpl([this]() {
+                  for (auto& [id, window] : _windows) window->OnInit();
+              })) {}
 
         void Run() override {
-            wxApp::SetInstance(_impl);
+            wxApp::SetInstance(_wxApplication);
 
             int    argc = 0;
             char** argv = nullptr;
-            wxEntryStart(argc, argv);
-
-            if (!wxTheApp || !wxTheApp->CallOnInit()) return;
-            wxTheApp->OnRun();
-            wxTheApp->OnExit();
-            wxEntryCleanup();
+            if (wxEntryStart(argc, argv)) {
+                if (wxTheApp->OnInit()) wxTheApp->OnRun();
+                wxTheApp->OnExit();
+                _windows.clear();
+                wxEntryCleanup();
+            }
         }
 
         UIWindow* NewWindow(const char* title) override {
-            if (_windows.empty()) {
-                auto mainWindow = _impl->GetMainWindow();
-                mainWindow->SetTitle(title);
-                _windows.emplace_back(std::make_unique<Window>(mainWindow));
-            } else {
-                auto windowImpl = std::make_shared<Impl::wxWindowImpl>(title);
-                _windows.emplace_back(std::make_unique<Window>(windowImpl));
-            }
-            return _windows.back().get();
+            auto window =
+                std::make_unique<Window>(title, [this]() { _wxApplication->ExitMainLoop(); });
+            auto id = window->GetId();
+            window->SetTitle(title);
+            _windows[id] = std::move(window);
+            return _windows[id].get();
         }
     };
 
