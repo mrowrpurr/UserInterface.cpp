@@ -15,19 +15,26 @@ namespace UserInterface::wxWidgets {
 
     namespace Impl {
         class wxWindowImpl : public wxFrame {
-            std::function<void()> _onCloseCallback;
+            std::function<void()>       _onCloseCallback;
+            std::unique_ptr<wxBoxSizer> _sizer;
 
         public:
             wxWindowImpl(const wxString& title, std::function<void()> onCloseCallback)
                 : wxFrame(NULL, wxID_ANY, title, wxDefaultPosition, wxSize(300, 200)),
-                  _onCloseCallback(onCloseCallback) {
+                  _onCloseCallback(onCloseCallback),
+                  _sizer(std::make_unique<wxBoxSizer>(wxVERTICAL)) {
                 Bind(wxEVT_CLOSE_WINDOW, &wxWindowImpl::OnClose, this);
+                SetSizer(_sizer.get());
             }
 
             void OnClose(wxCloseEvent& event) {
                 event.Veto();
+                SetSizer(nullptr, false);
+                _sizer->GetChildren().clear();
                 _onCloseCallback();
             }
+
+            std::unique_ptr<wxBoxSizer>& GetSizer() { return _sizer; }
         };
 
         class wxApplicationImpl : public wxApp {
@@ -45,27 +52,80 @@ namespace UserInterface::wxWidgets {
     }
 
     class Label : public UILabel {
+        wxStaticText _wxLabel;
+
     public:
-        void        SetText(const char* text) {}
-        const char* GetText() { return nullptr; }
+        Label(wxWindow* window, const std::string& text) : _wxLabel(window, wxID_ANY, text) {}
+        wxStaticText& GetWxLabel() { return _wxLabel; }
+        void          SetText(const char* text) {
+            _wxLabel.SetLabel(text);
+            _wxLabel.Refresh();
+        }
+        const char* GetText() { return _wxLabel.GetLabel().c_str(); }
     };
 
     class Textbox : public UITextbox {
+        wxTextCtrl _wxTextbox;
+
     public:
-        void        SetText(const char* text) {}
-        const char* GetText() { return nullptr; }
+        Textbox(wxWindow* window, const std::string& text) : _wxTextbox(window, wxID_ANY, text) {}
+        wxTextCtrl& GetWxTextbox() { return _wxTextbox; }
+        void        SetText(const char* text) {
+            _wxTextbox.SetValue(text);
+            _wxTextbox.Refresh();
+        }
+        const char* GetText() { return _wxTextbox.GetValue().c_str(); }
     };
 
     class Button : public UIButton {
+        wxButton _wxButton;
+
     public:
-        void SetText(const char* text) {}
+        Button(wxWindow* window, const std::string& text, std::function<void()> callback)
+            : _wxButton(window, wxID_ANY, text) {
+            _wxButton.Bind(wxEVT_BUTTON, [callback](wxCommandEvent& event) { callback(); });
+        }
+        wxButton& GetWxButton() { return _wxButton; }
+        void      SetText(const char* text) {
+            _wxButton.SetLabel(text);
+            _wxButton.Refresh();
+        }
+        const char* GetText() { return _wxButton.GetLabel().c_str(); }
     };
 
     class WidgetContainer : public UIWidgetContainer {
+        std::vector<std::unique_ptr<UIWidget>> _widgets;
+        wxBoxSizer*                            _sizer;
+
     public:
-        UILabel*   AddLabel(const char* text) override { return nullptr; }
-        UITextbox* AddTextbox(const char* text) override { return nullptr; }
-        UIButton*  AddButton(const char* text, void (*callback)()) override { return nullptr; }
+        void SetSizer(wxBoxSizer* sizer) { _sizer = sizer; }
+
+        void Clear() {
+            _widgets.clear();
+            if (_sizer) _sizer->Clear(false);
+        }
+
+        UILabel* AddLabel(const char* text) override {
+            if (!_sizer) return nullptr;
+            auto label = std::make_unique<Label>(_sizer->GetContainingWindow(), text);
+            _sizer->Add(&label->GetWxLabel(), 0, wxALL, 5);
+            _widgets.push_back(std::move(label));
+            return static_cast<UILabel*>(_widgets.back().get());
+        }
+        UITextbox* AddTextbox(const char* text) override {
+            if (!_sizer) return nullptr;
+            auto textbox = std::make_unique<Textbox>(_sizer->GetContainingWindow(), text);
+            _sizer->Add(&textbox->GetWxTextbox(), 0, wxALL, 5);
+            _widgets.push_back(std::move(textbox));
+            return static_cast<UITextbox*>(_widgets.back().get());
+        }
+        UIButton* AddButton(const char* text, void (*callback)()) override {
+            if (!_sizer) return nullptr;
+            auto button = std::make_unique<Button>(_sizer->GetContainingWindow(), text, callback);
+            _sizer->Add(&button->GetWxButton(), 0, wxALL, 5);
+            _widgets.push_back(std::move(button));
+            return static_cast<UIButton*>(_widgets.back().get());
+        }
     };
 
     class Window;
@@ -104,7 +164,13 @@ namespace UserInterface::wxWidgets {
 
     public:
         Window(const std::string& title, std::function<void()> onCloseCallback)
-            : _wxWindow(std::make_unique<Impl::wxWindowImpl>(title, onCloseCallback)) {}
+            : _onCloseCallback(onCloseCallback),
+              _wxWindow(std::make_unique<Impl::wxWindowImpl>(title, [this]() {
+                  Clear();
+                  _onCloseCallback();
+              })) {
+            SetSizer(_wxWindow->GetSizer().get());
+        }
 
         unsigned int                         GetId() const { return _id; }
         std::unique_ptr<Impl::wxWindowImpl>& GetWxWindow() { return _wxWindow; }
@@ -127,9 +193,13 @@ namespace UserInterface::wxWidgets {
 
         UITab* AddTab(const char* tabTitle) override { return nullptr; }
 
-        UILabel*   AddLabel(const char* text) override { return nullptr; }
-        UITextbox* AddTextbox(const char* text) override { return nullptr; }
-        UIButton*  AddButton(const char* text, void (*callback)()) override { return nullptr; }
+        UILabel*   AddLabel(const char* text) override { return WidgetContainer::AddLabel(text); }
+        UITextbox* AddTextbox(const char* text) override {
+            return WidgetContainer::AddTextbox(text);
+        }
+        UIButton* AddButton(const char* text, void (*callback)()) override {
+            return WidgetContainer::AddButton(text, callback);
+        }
     };
 
     class Application : public UIApplication {
