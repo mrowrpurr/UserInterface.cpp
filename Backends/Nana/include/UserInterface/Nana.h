@@ -53,7 +53,8 @@ namespace UserInterface::Nana {
     };
 
     class WidgetContainer : public UIWidgetContainer {
-        std::string                                             _fieldsPlaceString;
+        std::string _fieldsPlaceString;
+        // TODO: why is this a unique_ptr? Try to make it a vector<UIWidget*>
         std::unique_ptr<std::vector<std::unique_ptr<UIWidget>>> _widgets;
         nana::panel<true>*                                      _nanaPanel;
         nana::place*                                            _nanaPanelPlace;
