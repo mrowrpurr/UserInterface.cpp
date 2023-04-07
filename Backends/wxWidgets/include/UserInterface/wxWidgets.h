@@ -15,23 +15,53 @@ namespace UserInterface::wxWidgets {
 
     namespace Impl {
         class wxWindowImpl : public wxFrame {
-            std::function<void()>       _onCloseCallback;
-            std::unique_ptr<wxBoxSizer> _sizer;
+            std::vector<std::function<void()>>       _onCloseCallbacks;
+            std::unique_ptr<wxBoxSizer>              _sizer;
+            std::unique_ptr<wxNotebook>              _notebook;
+            std::vector<std::unique_ptr<wxPanel>>    _notebookPagePanels;
+            std::vector<std::unique_ptr<wxBoxSizer>> _notebookPageSizers;
 
         public:
-            wxWindowImpl(const wxString& title, std::function<void()> onCloseCallback)
+            wxWindowImpl(const wxString& title)
                 : wxFrame(NULL, wxID_ANY, title, wxDefaultPosition, wxSize(300, 200)),
-                  _onCloseCallback(onCloseCallback),
                   _sizer(std::make_unique<wxBoxSizer>(wxVERTICAL)) {
                 Bind(wxEVT_CLOSE_WINDOW, &wxWindowImpl::OnClose, this);
                 SetSizer(_sizer.get());
             }
 
+            void AddOnCloseCallback(std::function<void()> callback) {
+                _onCloseCallbacks.push_back(callback);
+            }
+
             void OnClose(wxCloseEvent& event) {
                 event.Veto();
+                for (auto i = 0; i < _notebookPageSizers.size(); i++) {
+                    _notebookPagePanels[i]->SetSizer(nullptr, false);
+                    _notebookPageSizers[i]->GetChildren().clear();
+                    _notebookPageSizers[i]->Clear(false);
+                }
                 SetSizer(nullptr, false);
                 _sizer->GetChildren().clear();
-                _onCloseCallback();
+                for (auto& callback : _onCloseCallbacks) {
+                    callback();
+                }
+            }
+
+            void ConfigureTabs() {
+                if (_notebook) return;
+                _notebook = std::make_unique<wxNotebook>(this, wxID_ANY);
+                _sizer->Add(_notebook.get(), 1, wxEXPAND);
+            }
+
+            std::unique_ptr<wxBoxSizer>& AddTab(const char* tabName) {
+                ConfigureTabs();
+                auto panel = std::make_unique<wxPanel>(_notebook.get(), wxID_ANY);
+                auto sizer = std::make_unique<wxBoxSizer>(wxVERTICAL);
+                panel->SetSizer(sizer.get());
+                _notebook->AddPage(panel.get(), tabName);
+                _notebookPagePanels.push_back(std::move(panel));
+                _notebookPageSizers.push_back(std::move(sizer));
+                return _notebookPageSizers.back();
             }
 
             std::unique_ptr<wxBoxSizer>& GetSizer() { return _sizer; }
@@ -134,11 +164,18 @@ namespace UserInterface::wxWidgets {
         std::string _title;
 
     public:
+        Tab(const char* title, wxBoxSizer* sizer) : _title(title) { SetSizer(sizer); }
         const char* GetTitle() override { return _title.c_str(); }
-        void        SetTitle(const char*) override {}
-        UILabel*    AddLabel(const char* text) override { return nullptr; }
-        UITextbox*  AddTextbox(const char* text) override { return nullptr; }
-        UIButton*   AddButton(const char* text, void (*callback)()) override { return nullptr; }
+        void        SetTitle(const char*) override {
+            // Not supported
+        }
+        UILabel*   AddLabel(const char* text) override { return WidgetContainer::AddLabel(text); }
+        UITextbox* AddTextbox(const char* text) override {
+            return WidgetContainer::AddTextbox(text);
+        }
+        UIButton* AddButton(const char* text, void (*callback)()) override {
+            return WidgetContainer::AddButton(text, callback);
+        }
     };
 
     namespace {
@@ -146,14 +183,10 @@ namespace UserInterface::wxWidgets {
     }
 
     class Window : public WidgetContainer, public UIWindow {
-        unsigned int _id = _nextWindowId++;
-
-        bool                               _appInitialized = false;
-        std::vector<std::function<void()>> _onInitCallbacks;
-
-        std::function<void()> _onCloseCallback;
-
-        bool                                _tabsInitialized = false;
+        unsigned int                        _id             = _nextWindowId++;
+        bool                                _appInitialized = false;
+        std::vector<std::function<void()>>  _onInitCallbacks;
+        std::function<void()>               _onCloseCallback;
         std::vector<std::unique_ptr<Tab>>   _tabs;
         std::unique_ptr<Impl::wxWindowImpl> _wxWindow;
 
@@ -165,11 +198,13 @@ namespace UserInterface::wxWidgets {
     public:
         Window(const std::string& title, std::function<void()> onCloseCallback)
             : _onCloseCallback(onCloseCallback),
-              _wxWindow(std::make_unique<Impl::wxWindowImpl>(title, [this]() {
-                  Clear();
-                  _onCloseCallback();
-              })) {
+              _wxWindow(std::make_unique<Impl::wxWindowImpl>(title)) {
             SetSizer(_wxWindow->GetSizer().get());
+            _wxWindow->AddOnCloseCallback([this]() {
+                Clear();
+                if (_onCloseCallback) _onCloseCallback();
+            });
+            _wxWindow->ConfigureTabs();
         }
 
         unsigned int                         GetId() const { return _id; }
@@ -191,7 +226,14 @@ namespace UserInterface::wxWidgets {
             return true;
         }
 
-        UITab* AddTab(const char* tabTitle) override { return nullptr; }
+        UITab* AddTab(const char* tabTitle) override {
+            auto& tabSizer = _wxWindow->AddTab(tabTitle);
+            auto  tab      = std::make_unique<Tab>(tabTitle, tabSizer.get());
+            _tabs.push_back(std::move(tab));
+            auto* tabPtr = _tabs.back().get();
+            _wxWindow->AddOnCloseCallback([tabPtr]() { tabPtr->Clear(); });
+            return tabPtr;
+        }
 
         UILabel*   AddLabel(const char* text) override { return WidgetContainer::AddLabel(text); }
         UITextbox* AddTextbox(const char* text) override {
