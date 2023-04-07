@@ -18,8 +18,6 @@
 
 namespace UserInterface::Nana {
 
-    namespace Impl {}
-
     class Label : public UILabel {
         nana::label _nanaLabel;
 
