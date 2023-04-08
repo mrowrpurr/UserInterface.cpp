@@ -102,23 +102,13 @@ namespace UserInterface::Qt {
 
     class Tab : public WidgetContainer, public UITab {
         std::string _title;
-        // nana::panel<true> _nanaPanel;
-        // nana::place       _nanaPlace;
-        // nana::place*      _windowPlace;
+        QWidget     _qtTab;
+        QVBoxLayout _qtTabLayout{&_qtTab};
 
     public:
-        // Tab(nana::form* nanaForm, nana::place* windowPlace, const char* title)
-        //     : WidgetContainer("fields", &_nanaPanel, &_nanaPlace),
-        //       _title(title),
-        //       _nanaPanel(*nanaForm),
-        //       _nanaPlace(_nanaPanel),
-        //       _windowPlace(windowPlace) {
-        //     _nanaPlace.div("vert <vert fields gap=5 arrange=[25,repeated]>");
-        // }
+        Tab() : WidgetContainer(&_qtTabLayout) {}
 
-        // nana::panel<true>* GetNanaPanel() { return &_nanaPanel; }
-        void Show() {}
-        void Hide() {}
+        QWidget* GetTabImpl() { return &_qtTab; }
 
         const char* GetTitle() override { return _title.c_str(); }
         void        SetTitle(const char*) override {}
@@ -135,10 +125,21 @@ namespace UserInterface::Qt {
         std::vector<std::unique_ptr<Tab>> _tabs;
         QWidget                           _qtWindow;
         QVBoxLayout                       _qtLayout{&_qtWindow};
+        std::unique_ptr<QTabWidget>       _qtTabWidget;
+
+        void ConfigureTabs() {
+            if (_qtTabWidget) return;
+            _qtTabWidget = std::make_unique<QTabWidget>(&_qtWindow);
+            _qtLayout.addWidget(_qtTabWidget.get());
+        }
 
     public:
         Window() : WidgetContainer(&_qtLayout) {}
-        ~Window() { Clear(); }
+        ~Window() {
+            Clear();
+            for (auto& tab : _tabs) tab->Clear();
+            _tabs.clear();
+        }
 
         bool Show() override {
             _qtWindow.show();
@@ -151,8 +152,11 @@ namespace UserInterface::Qt {
         }
 
         UITab* AddTab(const char* tabTitle) override {
-            //
-            return nullptr;
+            ConfigureTabs();
+            auto tab = std::make_unique<Tab>();
+            _qtTabWidget->addTab(tab->GetTabImpl(), tabTitle);
+            _tabs.push_back(std::move(tab));
+            return static_cast<UITab*>(_tabs.back().get());
         }
 
         UILabel*   AddLabel(const char* text) override { return WidgetContainer::AddLabel(text); }
@@ -175,6 +179,7 @@ namespace UserInterface::Qt {
 
         void Run() override {
             _qtApplication->exec();
+            for (auto& window : _windows) window->Clear();
             _windows.clear();
             _qtApplication.reset();
         }
