@@ -42,9 +42,7 @@ namespace UserInterface::wxWidgets {
                 }
                 SetSizer(nullptr, false);
                 _sizer->GetChildren().clear();
-                for (auto& callback : _onCloseCallbacks) {
-                    callback();
-                }
+                for (auto& callback : _onCloseCallbacks) callback();
             }
 
             void ConfigureTabs() {
@@ -207,6 +205,8 @@ namespace UserInterface::wxWidgets {
             _wxWindow->ConfigureTabs();
         }
 
+        // TODO remove the 'id' concept, I don't think we need it anymore. And switch back to vector
+        // from map
         unsigned int                         GetId() const { return _id; }
         std::unique_ptr<Impl::wxWindowImpl>& GetWxWindow() { return _wxWindow; }
 
