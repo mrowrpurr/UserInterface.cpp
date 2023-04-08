@@ -118,7 +118,6 @@ namespace UserInterface::Nana {
         void               Hide() { _nanaPanel.hide(); }
 
         const char* GetTitle() override { return _title.c_str(); }
-        void        SetTitle(const char*) override {}
         UILabel*    AddLabel(const char* text) override {
             auto* label = WidgetContainer::AddLabel(text);
             _nanaPlace.collocate();
@@ -155,7 +154,7 @@ namespace UserInterface::Nana {
             _nanaMainPlace.collocate();
             _tabsInitialized = true;
             _nanaTabBar.events().activated([&](const nana::arg_tabbar<std::string>& tabbar) {
-                for (auto i = 0; i < _tabs.size(); i++) {
+                for (size_t i = 0; i < _tabs.size(); i++) {
                     if (tabbar.item_pos == i) {
                         _tabs[i]->Show();
                     } else {
@@ -180,15 +179,34 @@ namespace UserInterface::Nana {
             return true;
         }
 
+        bool Hide() override {
+            _nanaForm.hide();
+            return true;
+        }
+
+        bool Close() override {
+            _nanaForm.close();
+            return true;
+        }
+
         bool SetTitle(const char* title) override {
             _nanaForm.caption(title);
+            return true;
+        }
+
+        bool SetHeight(unsigned int height) override {
+            _nanaForm.size({_nanaForm.size().width, height});
+            return true;
+        }
+
+        bool SetWidth(unsigned int width) override {
+            _nanaForm.size({width, _nanaForm.size().height});
             return true;
         }
 
         UITab* AddTab(const char* tabTitle) override {
             InitializeTabs();
             auto tab = std::make_unique<Tab>(&_nanaForm, &_nanaMainPlace, tabTitle);
-            tab->SetTitle(tabTitle);
             _nanaTabBar.push_back(tabTitle);
             _nanaMainPlace.field("tabPanels").fasten(*tab->GetNanaPanel());
             _tabs.push_back(std::move(tab));
