@@ -111,7 +111,6 @@ namespace UserInterface::Qt {
         QWidget* GetTabImpl() { return &_qtTab; }
 
         const char* GetTitle() override { return _title.c_str(); }
-        void        SetTitle(const char*) override {}
         UILabel*    AddLabel(const char* text) override { return WidgetContainer::AddLabel(text); }
         UITextbox*  AddTextbox(const char* text) override {
             return WidgetContainer::AddTextbox(text);
@@ -146,8 +145,28 @@ namespace UserInterface::Qt {
             return true;
         }
 
+        bool Hide() override {
+            _qtWindow.hide();
+            return true;
+        }
+
+        bool Close() override {
+            _qtWindow.close();
+            return true;
+        }
+
         bool SetTitle(const char* title) override {
             _qtWindow.setWindowTitle(title);
+            return true;
+        }
+
+        bool SetHeight(unsigned int height) override {
+            _qtWindow.resize(_qtWindow.width(), height);
+            return true;
+        }
+
+        bool SetWidth(unsigned int width) override {
+            _qtWindow.resize(width, _qtWindow.height());
             return true;
         }
 
