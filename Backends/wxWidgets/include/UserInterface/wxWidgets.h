@@ -33,9 +33,10 @@ namespace UserInterface::wxWidgets {
                 _onCloseCallbacks.push_back(callback);
             }
 
-            void OnClose(wxCloseEvent& event) {
-                event.Veto();
-                for (auto i = 0; i < _notebookPageSizers.size(); i++) {
+            std::unique_ptr<wxNotebook>& GetNotebook() { return _notebook; }
+
+            void OnClose(wxCloseEvent&) {
+                for (size_t i = 0; i < _notebookPageSizers.size(); i++) {
                     _notebookPagePanels[i]->SetSizer(nullptr, false);
                     _notebookPageSizers[i]->GetChildren().clear();
                     _notebookPageSizers[i]->Clear(false);
@@ -43,6 +44,7 @@ namespace UserInterface::wxWidgets {
                 SetSizer(nullptr, false);
                 _sizer->GetChildren().clear();
                 for (auto& callback : _onCloseCallbacks) callback();
+                Hide();
             }
 
             void ConfigureTabs() {
@@ -159,13 +161,19 @@ namespace UserInterface::wxWidgets {
     class Window;
 
     class Tab : public WidgetContainer, public UITab {
-        std::string _title;
+        unsigned int _tabIndex;
+        wxNotebook*  _notebook;
+        std::string  _title;
 
     public:
-        Tab(const char* title, wxBoxSizer* sizer) : _title(title) { SetSizer(sizer); }
+        Tab(unsigned int tabIndex, wxNotebook* notebook, const char* title, wxBoxSizer* sizer)
+            : _tabIndex(tabIndex), _notebook(notebook), _title(title) {
+            SetSizer(sizer);
+        }
         const char* GetTitle() override { return _title.c_str(); }
-        void        SetTitle(const char*) override {
-            // Not supported
+        void        SetTitle(const char* title) {
+            _notebook->SetPageText(_tabIndex, title);
+            _title = title;
         }
         UILabel*   AddLabel(const char* text) override { return WidgetContainer::AddLabel(text); }
         UITextbox* AddTextbox(const char* text) override {
@@ -176,12 +184,10 @@ namespace UserInterface::wxWidgets {
         }
     };
 
-    namespace {
-        std::atomic<unsigned int> _nextWindowId = 0;
-    }
-
     class Window : public WidgetContainer, public UIWindow {
-        unsigned int                        _id             = _nextWindowId++;
+        unsigned int                        _height         = 100;
+        unsigned int                        _width          = 100;
+        bool                                _isVisible      = false;
         bool                                _appInitialized = false;
         std::vector<std::function<void()>>  _onInitCallbacks;
         std::function<void()>               _onCloseCallback;
@@ -199,15 +205,14 @@ namespace UserInterface::wxWidgets {
               _wxWindow(std::make_unique<Impl::wxWindowImpl>(title)) {
             SetSizer(_wxWindow->GetSizer().get());
             _wxWindow->AddOnCloseCallback([this]() {
+                for (auto& tab : _tabs) tab->Clear();
                 Clear();
+                _isVisible = false;
                 if (_onCloseCallback) _onCloseCallback();
             });
             _wxWindow->ConfigureTabs();
         }
 
-        // TODO remove the 'id' concept, I don't think we need it anymore. And switch back to vector
-        // from map
-        unsigned int                         GetId() const { return _id; }
         std::unique_ptr<Impl::wxWindowImpl>& GetWxWindow() { return _wxWindow; }
 
         void OnInit() {
@@ -217,21 +222,51 @@ namespace UserInterface::wxWidgets {
         }
 
         bool Show() override {
-            PerformOnInitOrNow([this]() { _wxWindow->Show(true); });
+            PerformOnInitOrNow([this]() {
+                _wxWindow->Show(true);
+                _isVisible = true;
+            });
+            return true;
+        }
+
+        bool Hide() override {
+            _wxWindow->Show(false);
+            _isVisible = false;
+            return true;
+        }
+
+        bool IsVisible() { return _isVisible; }
+
+        bool Close() override {
+            Clear();
+            _wxWindow->Close();
             return true;
         }
 
         bool SetTitle(const char* title) override {
-            PerformOnInitOrNow([this, title]() { _wxWindow->SetTitle(title); });
+            _wxWindow->SetTitle(title);
+            return true;
+        }
+
+        bool SetHeight(unsigned int height) override {
+            _wxWindow->SetSize(_width, height);
+            _height = height;
+            return true;
+        }
+
+        bool SetWidth(unsigned int width) override {
+            _wxWindow->SetSize(width, _height);
+            _width = width;
             return true;
         }
 
         UITab* AddTab(const char* tabTitle) override {
             auto& tabSizer = _wxWindow->AddTab(tabTitle);
-            auto  tab      = std::make_unique<Tab>(tabTitle, tabSizer.get());
+            auto  tab      = std::make_unique<Tab>(
+                _tabs.size(), _wxWindow->GetNotebook().get(), tabTitle, tabSizer.get()
+            );
             _tabs.push_back(std::move(tab));
             auto* tabPtr = _tabs.back().get();
-            _wxWindow->AddOnCloseCallback([tabPtr]() { tabPtr->Clear(); });
             return tabPtr;
         }
 
@@ -245,13 +280,20 @@ namespace UserInterface::wxWidgets {
     };
 
     class Application : public UIApplication {
-        std::unordered_map<unsigned int, std::unique_ptr<Window>> _windows;
-        Impl::wxApplicationImpl*                                  _wxApplication;
+        std::vector<std::unique_ptr<Window>> _windows;
+        Impl::wxApplicationImpl*             _wxApplication;
+
+        void WindowClosedCallback() {
+            size_t visibleWindows = 0;
+            for (auto& window : _windows)
+                if (window->IsVisible()) ++visibleWindows;
+            if (visibleWindows == 0) _wxApplication->ExitMainLoop();
+        }
 
     public:
         Application()
             : _wxApplication(new Impl::wxApplicationImpl([this]() {
-                  for (auto& [id, window] : _windows) window->OnInit();
+                  for (auto& window : _windows) window->OnInit();
               })) {}
 
         void Run() override {
@@ -262,18 +304,17 @@ namespace UserInterface::wxWidgets {
             if (wxEntryStart(argc, argv)) {
                 if (wxTheApp->OnInit()) wxTheApp->OnRun();
                 wxTheApp->OnExit();
+                for (auto& window : _windows) window->Close();
                 _windows.clear();
                 wxEntryCleanup();
             }
         }
 
         UIWindow* NewWindow(const char* title) override {
-            auto window =
-                std::make_unique<Window>(title, [this]() { _wxApplication->ExitMainLoop(); });
-            auto id = window->GetId();
+            auto window = std::make_unique<Window>(title, [this]() { WindowClosedCallback(); });
             window->SetTitle(title);
-            _windows[id] = std::move(window);
-            return _windows[id].get();
+            _windows.push_back(std::move(window));
+            return _windows.back().get();
         }
     };
 
