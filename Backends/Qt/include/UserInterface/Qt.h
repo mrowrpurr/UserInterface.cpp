@@ -3,6 +3,7 @@
 #include <UserInterface/Interfaces.h>
 
 #include <QApplication>
+#include <QCloseEvent>
 #include <QHBoxLayout>
 #include <QLabel>
 #include <QLineEdit>
@@ -18,61 +19,68 @@
 namespace UserInterface::Qt {
 
     class Label : public UILabel {
-        std::unique_ptr<QLabel> _label;
-        std::string             _text;
+        QLabel      _label;
+        std::string _text;
 
     public:
-        Label(const char* text) : _label(std::make_unique<QLabel>(text)), _text(text) {}
-        std::unique_ptr<QLabel>& GetLabelImpl() { return _label; }
-        void                     SetText(const char* text) { _label->setText(text); }
-        const char*              GetText() {
-            _text = _label->text().toStdString();
+        Label() = default;
+        Label(const char* text) : _label(text) {}
+        QLabel*     GetLabelImpl() { return &_label; }
+        void        SetText(const char* text) { _label.setText(text); }
+        const char* GetText() {
+            _text = _label.text().toStdString();
             return _text.c_str();
         }
     };
 
     class Textbox : public UITextbox {
-        QLineEdit*  _textbox;
+        QLineEdit   _textbox;
         std::string _text;
 
     public:
-        Textbox(const char* text) : _textbox(new QLineEdit(text)) { _text = text; }
-        QLineEdit* GetTextboxImpl() { return _textbox; }
+        Textbox() = default;
+        Textbox(const char* text) : _textbox(text) {}
+        QLineEdit* GetTextboxImpl() { return &_textbox; }
         void       SetText(const char* text) {
-            _textbox->setText(text);
-            _textbox->setCursorPosition(0);
+            _textbox.setText(text);
+            _textbox.setCursorPosition(0);
         }
         const char* GetText() {
-            _text = _textbox->text().toStdString();
+            _text = _textbox.text().toStdString();
             return _text.c_str();
         }
     };
 
     class Button : public UIButton {
-        QPushButton* _button;
-        void (*_callback)() = nullptr;
+        QPushButton _button;
+        std::string _text;
 
     public:
-        Button(const char* text, void (*callback)()) : _button(new QPushButton(text)) {
-            _callback = callback;
-            QObject::connect(_button, &QPushButton::clicked, [=]() { _callback(); });
+        Button() = default;
+        Button(const char* text, void (*callback)()) : _button(text) {
+            QObject::connect(&_button, &QPushButton::clicked, [=]() { callback(); });
         }
-        QPushButton* GetButtonImpl() { return _button; }
-        void         SetText(const char* text) { _button->setText(text); }
+        QPushButton* GetButtonImpl() { return &_button; }
+        void         SetText(const char* text) { _button.setText(text); }
+        const char*  GetText() {
+            _text = _button.text().toStdString();
+            return _text.c_str();
+        }
     };
 
     class WidgetContainer : public UIWidgetContainer {
-        std::unique_ptr<QVBoxLayout>&          _layout;
+        std::string                            _fieldsPlaceString;
         std::vector<std::unique_ptr<UIWidget>> _widgets;
+        QBoxLayout*                            _layout;
 
     public:
-        WidgetContainer(std::unique_ptr<QVBoxLayout>& layout) : _layout(layout) {}
+        WidgetContainer(QBoxLayout* layout) : _layout(layout) {}
 
-        std::vector<std::unique_ptr<UIWidget>>& GetWidgets() { return _widgets; }
+        void Clear() { _widgets.clear(); }
 
         UILabel* AddLabel(const char* text) override {
             auto label = std::make_unique<Label>(text);
-            _layout->addWidget(label->GetLabelImpl().get());
+            _layout->addWidget(label->GetLabelImpl());
             _widgets.push_back(std::move(label));
             return static_cast<UILabel*>(_widgets.back().get());
         }
@@ -92,23 +100,28 @@ namespace UserInterface::Qt {
 
     class Window;
 
-    class Tab : public UITab, public WidgetContainer {
-        std::string                  _title;
-        std::unique_ptr<QVBoxLayout> _layout;
-        std::unique_ptr<QWidget>     _tabWidget;
+    class Tab : public WidgetContainer, public UITab {
+        std::string _title;
+        // nana::panel<true> _nanaPanel;
+        // nana::place       _nanaPlace;
+        // nana::place*      _windowPlace;
 
     public:
-        Tab()
-            : WidgetContainer(_layout),
-              _layout(std::make_unique<QVBoxLayout>()),
-              _tabWidget(std::make_unique<QWidget>()) {
-            _tabWidget->setLayout(_layout.get());
-        }
+        // Tab(nana::form* nanaForm, nana::place* windowPlace, const char* title)
+        //     : WidgetContainer("fields", &_nanaPanel, &_nanaPlace),
+        //       _title(title),
+        //       _nanaPanel(*nanaForm),
+        //       _nanaPlace(_nanaPanel),
+        //       _windowPlace(windowPlace) {
+        //     _nanaPlace.div("vert <vert fields gap=5 arrange=[25,repeated]>");
+        // }
 
-        std::unique_ptr<QWidget>& GetTabWidget() { return _tabWidget; }
+        // nana::panel<true>* GetNanaPanel() { return &_nanaPanel; }
+        void Show() {}
+        void Hide() {}
 
         const char* GetTitle() override { return _title.c_str(); }
-        void        SetTitle(const char* title) override { _title = title; }
+        void        SetTitle(const char*) override {}
         UILabel*    AddLabel(const char* text) override { return WidgetContainer::AddLabel(text); }
         UITextbox*  AddTextbox(const char* text) override {
             return WidgetContainer::AddTextbox(text);
@@ -118,40 +131,30 @@ namespace UserInterface::Qt {
         }
     };
 
-    class Window : public UIWindow, public WidgetContainer {
+    class Window : public WidgetContainer, public UIWindow {
         std::vector<std::unique_ptr<Tab>> _tabs;
-        QWidget                           _impl;
-        std::unique_ptr<QVBoxLayout>      _layout;
-        std::unique_ptr<QTabWidget>       _tabWidget;
-
-        void InitTabs() {
-            if (_tabWidget) return;
-            _tabWidget = std::make_unique<QTabWidget>(&_impl);
-            _layout->addWidget(_tabWidget.get());
-        }
+        QWidget                           _qtWindow;
+        QVBoxLayout                       _qtLayout{&_qtWindow};
 
     public:
-        Window()
-            : WidgetContainer(_layout), _impl(), _layout(std::make_unique<QVBoxLayout>(&_impl)) {
-            _impl.setLayout(_layout.get());
-        }
+        Window() : WidgetContainer(&_qtLayout) {}
+        ~Window() { Clear(); }
 
         bool Show() override {
-            _impl.show();
+            _qtWindow.show();
             return true;
         }
 
         bool SetTitle(const char* title) override {
-            _impl.setWindowTitle(title);
+            _qtWindow.setWindowTitle(title);
             return true;
         }
 
         UITab* AddTab(const char* tabTitle) override {
-            InitTabs();
-            _tabs.emplace_back(std::make_unique<Tab>());
-            _tabWidget->addTab(_tabs.back()->GetTabWidget().get(), tabTitle);
-            return _tabs.back().get();
+            //
+            return nullptr;
         }
+
         UILabel*   AddLabel(const char* text) override { return WidgetContainer::AddLabel(text); }
         UITextbox* AddTextbox(const char* text) override {
             return WidgetContainer::AddTextbox(text);
@@ -163,26 +166,24 @@ namespace UserInterface::Qt {
 
     class Application : public UIApplication {
         std::vector<std::unique_ptr<Window>> _windows;
-        std::unique_ptr<QApplication>        _impl;
+        int                                  _qtApplicationArgc = 0;
+        char**                               _qtApplicationArgv = nullptr;
+        std::unique_ptr<QApplication>        _qtApplication;
 
     public:
-        Application() {
-            int    argc = 0;
-            char** argv = nullptr;
-            _impl       = std::make_unique<QApplication>(argc, argv);
-        }
+        Application() : _qtApplication(new QApplication(_qtApplicationArgc, _qtApplicationArgv)) {}
 
         void Run() override {
-            int    argc = 0;
-            char** argv = nullptr;
-            _impl->exec();
+            _qtApplication->exec();
+            _windows.clear();
+            _qtApplication.reset();
         }
 
         UIWindow* NewWindow(const char* title) override {
             auto window = std::make_unique<Window>();
-            auto result = window.get();
-            _windows.emplace_back(std::move(window));
-            return result;
+            window->SetTitle(title);
+            _windows.push_back(std::move(window));
+            return _windows.back().get();
         }
     };
 
