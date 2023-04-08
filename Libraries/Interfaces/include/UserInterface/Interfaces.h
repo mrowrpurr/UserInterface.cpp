@@ -27,16 +27,19 @@ namespace UserInterface {
     };
 
     struct UITab : public UIWidgetContainer {
-        virtual ~UITab()                                = default;
-        virtual const char* GetTitle()                  = 0;
-        virtual void        SetTitle(const char* title) = 0;
+        virtual ~UITab()               = default;
+        virtual const char* GetTitle() = 0;
     };
 
     struct UIWindow : public UIWidgetContainer {
-        virtual ~UIWindow()                        = default;
-        virtual bool   Show()                      = 0;
-        virtual bool   SetTitle(const char* title) = 0;
-        virtual UITab* AddTab(const char* title)   = 0;
+        virtual ~UIWindow()                           = default;
+        virtual bool   Show()                         = 0;
+        virtual bool   Hide()                         = 0;
+        virtual bool   Close()                        = 0;
+        virtual bool   SetTitle(const char* title)    = 0;
+        virtual UITab* AddTab(const char* title)      = 0;
+        virtual bool   SetHeight(unsigned int height) = 0;
+        virtual bool   SetWidth(unsigned int width)   = 0;
     };
 
     struct UIApplication {
