@@ -11,17 +11,17 @@
 
 | Feature    | Qt  | Gtkmm | wxWidgets | FLTK | ImGui | Nana |
 | ---------- | --- | ----- | --------- | ---- | ----- | ---- |
-| Window     |     |       |           |      |       |      |
-| Label      |     |       |           |      |       |      |
-| Text field |     |       |           |      |       |      |
-| Button     |     |       |           |      |       |      |
-| Tabs       |     |       |           |      |       |      |
+| Window     | x   |       | x         |      |       | x    |
+| Label      | x   |       | x         |      |       | x    |
+| Text field | x   |       | x         |      |       | x    |
+| Button     | x   |       | x         |      |       | x    |
+| Tabs       | x   |       | x         |      |       | x    |
 
 ### Future
 
 | Feature          | Qt  | Gtkmm | wxWidgets | FLTK | ImGui | Nana |
 | ---------------- | --- | ----- | --------- | ---- | ----- | ---- |
-| Multiple Windows |     |       |           |      |       |      |
+| Multiple Windows | x   |       | x         |      |       | x    |
 | Window icons     |     |       |           |      |       |      |
 | Menu items       |     |       |           |      |       |      |
 | Toolbar buttons  |     |       |           |      |       |      |
@@ -39,3 +39,4 @@
 | Input dialog     |     |       |           |      |       |      |
 | File dialog      |     |       |           |      |       |      |
 | Folder dialog    |     |       |           |      |       |      |
+| System tray icon |     |       |           |      |       |      |
