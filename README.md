@@ -9,33 +9,33 @@
 
 ### v1
 
-| Feature      | Qt  | Gtkmm | wxWidgets | FLTK | ImGUI | nana |
-| ------------ | --- | ----- | --------- | ---- | ----- | ---- |
-| Window       |     |       |           |      |       |      |
-| Window title |     |       |           |      |       |      |
-| Window icon  |     |       |           |      |       |      |
-| Tab          |     |       |           |      |       |      |
-| Label        |     |       |           |      |       |      |
-| Text field   |     |       |           |      |       |      |
-| Button       |     |       |           |      |       |      |
+| Feature    | Qt  | Gtkmm | wxWidgets | FLTK | ImGui | Nana |
+| ---------- | --- | ----- | --------- | ---- | ----- | ---- |
+| Window     |     |       |           |      |       |      |
+| Label      |     |       |           |      |       |      |
+| Text field |     |       |           |      |       |      |
+| Button     |     |       |           |      |       |      |
+| Tabs       |     |       |           |      |       |      |
 
 ### Future
 
-| Feature         | Qt  | Gtkmm | wxWidgets | FLTK | ImGUI | nana |
-| --------------- | --- | ----- | --------- | ---- | ----- | ---- |
-| Menu items      |     |       |           |      |       |      |
-| Toolbar buttons |     |       |           |      |       |      |
-| Text area       |     |       |           |      |       |      |
-| Checkbox        |     |       |           |      |       |      |
-| Radio button    |     |       |           |      |       |      |
-| Dropdown        |     |       |           |      |       |      |
-| Listbox         |     |       |           |      |       |      |
-| Slider          |     |       |           |      |       |      |
-| Progress bar    |     |       |           |      |       |      |
-| Image           |     |       |           |      |       |      |
-| Table           |     |       |           |      |       |      |
-| Tree            |     |       |           |      |       |      |
-| Message dialog  |     |       |           |      |       |      |
-| Input dialog    |     |       |           |      |       |      |
-| File dialog     |     |       |           |      |       |      |
-| Folder dialog   |     |       |           |      |       |      |
+| Feature          | Qt  | Gtkmm | wxWidgets | FLTK | ImGui | Nana |
+| ---------------- | --- | ----- | --------- | ---- | ----- | ---- |
+| Multiple Windows |     |       |           |      |       |      |
+| Window icons     |     |       |           |      |       |      |
+| Menu items       |     |       |           |      |       |      |
+| Toolbar buttons  |     |       |           |      |       |      |
+| Text area        |     |       |           |      |       |      |
+| Checkbox         |     |       |           |      |       |      |
+| Radio button     |     |       |           |      |       |      |
+| Dropdown         |     |       |           |      |       |      |
+| Listbox          |     |       |           |      |       |      |
+| Slider           |     |       |           |      |       |      |
+| Progress bar     |     |       |           |      |       |      |
+| Image            |     |       |           |      |       |      |
+| Table            |     |       |           |      |       |      |
+| Tree             |     |       |           |      |       |      |
+| Message dialog   |     |       |           |      |       |      |
+| Input dialog     |     |       |           |      |       |      |
+| File dialog      |     |       |           |      |       |      |
+| Folder dialog    |     |       |           |      |       |      |
